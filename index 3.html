@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>V.V. Spirit JO16-2 Coach</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  body { background-color: #111113; color: #ffffff; display: flex; flex-direction: column; min-height: 100vh; padding-bottom: 78px; user-select: none; }
+  
+  /* Header */
+  .header-card { background: #1c1c1e; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2c2c2e; }
+  .team-col { display: flex; flex-direction: column; align-items: center; width: 64px; gap: 4px; }
+  .spirit-badge { width: 52px; height: 52px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; border: 2px solid #facc15; overflow: hidden; }
+  .red-badge { width: 52px; height: 52px; border-radius: 50%; background: #ef4444; border: 3px solid rgba(255,255,255,0.2); }
+  .team-label { font-size: 13px; font-weight: 900; color: #ffffff; letter-spacing: 0.3px; }
+  
+  .score-pill { flex: 1; margin: 0 8px; background: #242427; border: 1px solid #38383d; border-radius: 999px; height: 62px; display: flex; align-items: center; justify-content: space-between; padding: 4px; }
+  .score-circle { width: 52px; height: 52px; border-radius: 50%; background: #09090b; border: 2px solid #3f3f46; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; color: #ffffff; cursor: pointer; }
+  .score-circle:active { transform: scale(0.94); border-color: #facc15; }
+  .time-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
+  .time-display { font-size: 22px; font-weight: 900; color: #ffffff; line-height: 1.1; }
+  .status-pill { margin-top: 3px; font-size: 11px; font-weight: 800; color: #d4d4d8; background: #323236; padding: 2px 8px; border-radius: 999px; }
+  .status-pill.running { background: #16a34a; color: #ffffff; }
+  .status-pill.ended { background: #dc2626; color: #ffffff; }
+
+  /* Formatie bollen */
+  .blocks-bar { background: #18181b; padding: 10px 8px; display: flex; justify-content: space-around; align-items: center; border-bottom: 1px solid #27272a; }
+  .block-btn { width: 38px; height: 38px; border-radius: 50%; background: #27272a; border: 2px solid #52525b; color: #ffffff; font-size: 14px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; }
+  .block-btn.active { background: #16a34a; border-color: #4ade80; box-shadow: 0 0 10px rgba(22,163,74,0.5); }
+  .block-btn.preview { background: #facc15; border-color: #ffffff; color: #000000; transform: scale(1.08); }
+
+  /* Vierkant Veld */
+  .pitch-wrapper { width: 100%; aspect-ratio: 1 / 1; background: #16a34a; position: relative; overflow: hidden; border-top: 2px solid rgba(255,255,255,0.45); border-bottom: 2px solid rgba(255,255,255,0.45); }
+  .pitch-lines { position: absolute; inset: 8px; border: 2px solid rgba(255,255,255,0.45); pointer-events: none; }
+  .half-line { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.45); }
+  .center-circle { position: absolute; top: 50%; left: 50%; width: 22%; height: 22%; transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,0.45); border-radius: 50%; }
+  .box-top { position: absolute; top: 0; left: 24%; width: 52%; height: 16%; border: 2px solid rgba(255,255,255,0.45); border-top: none; }
+  .box-bottom { position: absolute; bottom: 0; left: 24%; width: 52%; height: 16%; border: 2px solid rgba(255,255,255,0.45); border-bottom: none; }
+
+  /* Speler Node */
+  .player-node { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; cursor: pointer; z-index: 2; }
+  .ball { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; position: relative; border: 2px solid rgba(0,0,0,0.35); }
+  .ball.field { background: #facc15; color: #000000; }
+  .ball.gk { background: #2563eb; color: #ffffff; border-color: #ffffff; }
+  .ball.bench { background: #27272a; color: #ffffff; border: 2px solid #ffffff; }
+  .ball.selected { box-shadow: 0 0 0 4px #ffffff, 0 0 14px #facc15; transform: scale(1.1); }
+  .min-badge { position: absolute; top: -5px; right: -7px; min-width: 19px; height: 19px; padding: 0 3px; border-radius: 999px; background: #ffffff; color: #000000; border: 1.5px solid #000000; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+  .player-name { margin-top: 3px; font-size: 12px; font-weight: 900; color: #ffffff; white-space: nowrap; text-shadow: none; }
+
+  /* Wisselbank */
+  .bench-bar { background: #052e16; padding: 12px 4px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; border-bottom: 1px solid #14532d; }
+  .bench-slot { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+
+  /* Tabbladen Spelers & Speeltijd */
+  .tab-view { display: none; padding: 12px; flex: 1; }
+  .tab-view.active { display: block; }
+  .section-title { font-size: 16px; font-weight: 900; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; margin: 10px 0 8px; }
+  .list-row { background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .row-left { display: flex; align-items: center; gap: 10px; }
+  .dot-green { width: 12px; height: 12px; border-radius: 50%; background: #16a34a; flex-shrink: 0; }
+  .row-name { font-size: 17px; font-weight: 900; color: #ffffff; }
+  .row-min { font-size: 17px; font-weight: 900; color: #facc15; }
+  .circle-action { width: 34px; height: 34px; border-radius: 50%; border: none; font-size: 20px; font-weight: 900; color: #ffffff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .btn-red { background: #ef4444; }
+  .btn-green { background: #16a34a; }
+
+  .team-manage { margin-top: 20px; background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 12px; }
+  .add-form { display: flex; gap: 8px; margin-bottom: 12px; }
+  .add-input { flex: 1; background: #27272a; border: 1px solid #3f3f46; border-radius: 10px; padding: 10px 12px; color: #ffffff; font-size: 16px; font-weight: 800; }
+  .add-btn { background: #16a34a; color: #ffffff; border: none; border-radius: 10px; padding: 0 16px; font-size: 15px; font-weight: 900; cursor: pointer; }
+  .del-chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+  .del-chip { background: #27272a; border: 1px solid #3f3f46; color: #e4e4e7; border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 800; cursor: pointer; }
+
+  /* Onderste Navigatie */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: #18181b; border-top: 1px solid #2c2c2e; display: grid; grid-template-columns: repeat(3, 1fr); z-index: 20; }
+  .nav-btn { background: none; border: none; color: #a1a1aa; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; }
+  .nav-btn.active { color: #16a34a; }
+  .nav-btn svg { width: 26px; height: 26px; stroke-width: 2.4; }
+  .nav-btn span { font-size: 14px; font-weight: 900; }
+
+  /* Modals */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.78); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .modal-backdrop.open { display: flex; }
+  .modal-box { background: #1c1c1e; border: 1px solid #3f3f46; border-radius: 18px; width: 100%; max-width: 380px; padding: 18px; max-height: 85vh; overflow-y: auto; }
+  .modal-title { font-size: 19px; font-weight: 900; margin-bottom: 14px; text-align: center; }
+  .modal-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: 900; margin-bottom: 10px; cursor: pointer; color: #ffffff; background: #27272a; }
+  .modal-btn.green { background: #16a34a; }
+  .modal-btn.amber { background: #d97706; }
+  .modal-btn.red { background: #dc2626; }
+  .picker-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+  .pick-btn { padding: 12px 8px; border-radius: 10px; border: 2px solid #3f3f46; background: #27272a; color: #ffffff; font-size: 15px; font-weight: 900; cursor: pointer; }
+  .pick-btn.chosen { border-color: #facc15; background: #422006; color: #facc15; }
+  .goal-log { margin-top: 10px; border-top: 1px solid #2c2c2e; padding-top: 8px; font-size: 13px; font-weight: 800; color: #d4d4d8; }
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header-card" id="headerCard"></div>
+
+  <!-- Tab 1: Formatie -->
+  <div id="tab-formatie">
+    <div class="blocks-bar" id="blocksBar"></div>
+    <div class="pitch-wrapper" id="pitchWrapper">
+      <div class="pitch-lines">
+        <div class="half-line"></div>
+        <div class="center-circle"></div>
+        <div class="box-top"></div>
+        <div class="box-bottom"></div>
+      </div>
+      <div id="pitchPlayers"></div>
+    </div>
+    <div class="bench-bar" id="benchBar"></div>
+  </div>
+
+  <!-- Tab 2: Spelers -->
+  <div class="tab-view" id="tab-spelers"></div>
+
+  <!-- Tab 3: Speeltijd -->
+  <div class="tab-view" id="tab-speeltijd"></div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="switchTab('formatie')" id="nav-formatie">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><circle cx="12" cy="12" r="3"/></svg>
+      <span>Formatie</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('spelers')" id="nav-spelers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Spelers</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('speeltijd')" id="nav-speeltijd">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg>
+      <span>Speeltijd</span>
+    </button>
+  </div>
+
+  <!-- Tijd Modal -->
+  <div class="modal-backdrop" id="timeModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">Wedstrijd & Tijd</div>
+      <button class="modal-btn green" id="startPauseBtn" onclick="toggleTimer()">▶ Start Wedstrijd</button>
+      <button class="modal-btn amber" onclick="endMatch()">⏹ Einde Wedstrijd</button>
+      <button class="modal-btn" id="durationBtn" onclick="toggleDuration()">⏱ Wedstrijdduur: 80 min</button>
+      <button class="modal-btn" onclick="toggleHomeAway()">⇄ Wissel Thuis / Uit</button>
+      <button class="modal-btn red" onclick="resetMatch()">↻ Reset Wedstrijd</button>
+      <button class="modal-btn" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
+  <!-- Doelpunt Spirit Modal -->
+  <div class="modal-backdrop" id="spiritGoalModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">Doelpunt JO16-2</div>
+      <div style="font-size:14px;font-weight:900;margin-bottom:6px;color:#facc15;">Doelpuntenmaker (veld):</div>
+      <div class="picker-grid" id="scorerGrid"></div>
+      <div style="font-size:14px;font-weight:900;margin-bottom:6px;color:#4ade80;">Assist (veld):</div>
+      <div class="picker-grid" id="assistGrid"></div>
+      <button class="modal-btn green" onclick="confirmSpiritGoal()">+1 Doelpunt Opslaan</button>
+      <button class="modal-btn red" onclick="removeSpiritGoal()">-1 Doelpunt Corrigeren</button>
+      <div class="goal-log" id="goalLog"></div>
+      <button class="modal-btn" style="margin-top:10px;" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
+  <!-- Doelpunt Tegenstander Modal -->
+  <div class="modal-backdrop" id="oppGoalModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">Score Tegenstander</div>
+      <button class="modal-btn green" onclick="changeOppScore(1)">+1 Doelpunt Tegenstander</button>
+      <button class="modal-btn red" onclick="changeOppScore(-1)">-1 Doelpunt Corrigeren</button>
+      <button class="modal-btn" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
+<script>
+const DEFAULT_PLAYERS = [
+  "Boaz", "Gijs", "Djim", "Thijmen", "Mees", "Hugo", "Rohan",
+  "Danilo", "Sven", "Thijs", "Vinnie", "Mads", "Mischa", "Omer",
+  "Tycho", "Jesse", "Mohammed"
+];
+
+// Posities in 4-4-2 (onder naar boven, links naar rechts)
+const POSITIONS = [
+  { x: 50, y: 90, isGk: true },  // 0: GK
+  { x: 14, y: 69 },              // 1: LB
+  { x: 38, y: 74 },              // 2: LCB
+  { x: 62, y: 74 },              // 3: RCB
+  { x: 86, y: 69 },              // 4: RB
+  { x: 14, y: 41 },              // 5: LM
+  { x: 38, y: 47 },              // 6: LCM
+  { x: 62, y: 47 },              // 7: RCM
+  { x: 86, y: 41 },              // 8: RM
+  { x: 35, y: 17 },              // 9: LST
+  { x: 65, y: 17 }               // 10: RST
+];
+
+const LINEUPS = {
+  0:  ["Boaz", "Hugo", "Gijs", "Djim", "Mees", "Jesse", "Danilo", "Sven", "Mads", "Tycho", "Mohammed"],
+  16: ["Boaz", "Hugo", "Gijs", "Djim", "Mees", "Omer", "Thijs", "Vinnie", "Mischa", "Tycho", "Mohammed"],
+  27: ["Boaz", "Rohan", "Thijmen", "Gijs", "Mees", "Omer", "Thijs", "Vinnie", "Mischa", "Tycho", "Mohammed"],
+  32: ["Boaz", "Rohan", "Thijmen", "Gijs", "Mees", "Mischa", "Danilo", "Thijs", "Mads", "Vinnie", "Jesse"],
+  48: ["Boaz", "Rohan", "Thijmen", "Gijs", "Mees", "Omer", "Danilo", "Sven", "Mohammed", "Tycho", "Jesse"],
+  53: ["Boaz", "Hugo", "Thijmen", "Djim", "Rohan", "Omer", "Danilo", "Sven", "Mohammed", "Tycho", "Jesse"],
+  64: ["Boaz", "Hugo", "Thijmen", "Djim", "Rohan", "Mischa", "Thijs", "Sven", "Mads", "Vinnie", "Omer"]
+};
+
+const BLOCK_KEYS = [0, 16, 27, 32, 48, 53, 64];
+
+let state = {
+  players: [...DEFAULT_PLAYERS],
+  absent: [],
+  minutes: {},
+  activeField: [...LINEUPS[0]],
+  activeBlock: 0,
+  previewBlock: null,
+  selectedPlayer: null,
+  spiritScore: 0,
+  oppScore: 0,
+  isHome: true,
+  duration: 80,
+  status: "Klaar", // Klaar, Lopend, Pauze, Einde
+  elapsedSec: 0,
+  lastTick: null,
+  goals: []
+};
+
+function initMinutes() {
+  state.players.forEach(p => { if (typeof state.minutes[p] !== "number") state.minutes[p] = 0; });
+}
+
+function saveState() {
+  try { localStorage.setItem("spirit_jo16_2_state_v1", JSON.stringify(state)); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem("spirit_jo16_2_state_v1");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state = { ...state, ...parsed };
+    }
+  } catch(e) {}
+  initMinutes();
+}
+
+function spiritLogoSVG() {
+  return `<svg viewBox="0 0 100 100" width="46" height="46">
+    <path d="M18 14 H82 V52 C82 74 50 90 50 90 C50 90 18 74 18 52 Z" fill="#ffffff" stroke="#111111" stroke-width="4"/>
+    <path d="M20 30 H50 V55 H20 Z" fill="#facc15"/>
+    <path d="M50 55 H80 V62 C76 74 50 87 50 87 Z" fill="#facc15"/>
+    <rect x="20" y="16" width="60" height="14" fill="#ffffff"/>
+    <line x1="20" y1="30" x2="80" y2="30" stroke="#111111" stroke-width="3"/>
+    <line x1="50" y1="30" x2="50" y2="87" stroke="#111111" stroke-width="3"/>
+    <line x1="20" y1="55" x2="80" y2="55" stroke="#111111" stroke-width="3"/>
+    <text x="50" y="26" font-size="9.5" font-weight="900" text-anchor="middle" fill="#111111">V.V. SPIRIT</text>
+    <text x="35" y="71" font-size="11" font-weight="900" text-anchor="middle" fill="#111111">19</text>
+    <text x="65" y="71" font-size="11" font-weight="900" text-anchor="middle" fill="#111111">45</text>
+    <circle cx="50" cy="48" r="9" fill="#facc15" stroke="#111111" stroke-width="2.5"/>
+  </svg>`;
+}
+
+function renderHeader() {
+  const mins = Math.floor(state.elapsedSec / 60);
+  const statusClass = state.status === "Lopend" ? "running" : (state.status === "Einde" ? "ended" : "");
+  const spiritCol = `
+    <div class="team-col">
+      <div class="spirit-badge">${spiritLogoSVG()}</div>
+      <div class="team-label">JO16-2</div>
+    </div>`;
+  const oppCol = `
+    <div class="team-col">
+      <div class="red-badge"></div>
+      <div class="team-label">&nbsp;</div>
+    </div>`;
+
+  const leftCol = state.isHome ? spiritCol : oppCol;
+  const rightCol = state.isHome ? oppCol : spiritCol;
+  const leftScore = state.isHome ? state.spiritScore : state.oppScore;
+  const rightScore = state.isHome ? state.oppScore : state.spiritScore;
+  const leftClick = state.isHome ? "openSpiritGoalModal()" : "openOppGoalModal()";
+  const rightClick = state.isHome ? "openOppGoalModal()" : "openSpiritGoalModal()";
+
+  document.getElementById("headerCard").innerHTML = `
+    ${leftCol}
+    <div class="score-pill">
+      <div class="score-circle" onclick="${leftClick}">${leftScore}</div>
+      <div class="time-center" onclick="openTimeModal()">
+        <div class="time-display">${mins} min</div>
+        <div class="status-pill ${statusClass}">${state.status} (${state.duration}m)</div>
+      </div>
+      <div class="score-circle" onclick="${rightClick}">${rightScore}</div>
+    </div>
+    ${rightCol}
+  `;
+}
+
+function renderBlocks() {
+  const bar = document.getElementById("blocksBar");
+  bar.innerHTML = BLOCK_KEYS.map(min => {
+    let cls = "block-btn";
+    if (state.previewBlock === min) cls += " preview";
+    else if (state.activeBlock === min && state.previewBlock === null) cls += " active";
+    return `<button class="${cls}" onclick="handleBlockClick(${min})">${min}</button>`;
+  }).join("");
+}
+
+function handleBlockClick(min) {
+  state.selectedPlayer = null;
+  if (state.previewBlock === min) {
+    // 2e klik: actief maken
+    const lineup = LINEUPS[min].filter(p => !state.absent.includes(p));
+    const available = state.players.filter(p => !state.absent.includes(p));
+    while (lineup.length < 11 && lineup.length < available.length) {
+      const next = available.find(p => !lineup.includes(p));
+      if (next) lineup.push(next); else break;
+    }
+    state.activeField = lineup;
+    state.activeBlock = min;
+    state.previewBlock = null;
+  } else {
+    // 1e klik: voorvertoning
+    state.previewBlock = min;
+  }
+  saveState();
+  renderAll();
+}
+
+function getDisplayedField() {
+  if (state.previewBlock !== null) {
+    const lineup = LINEUPS[state.previewBlock].filter(p => !state.absent.includes(p));
+    const available = state.players.filter(p => !state.absent.includes(p));
+    while (lineup.length < 11 && lineup.length < available.length) {
+      const next = available.find(p => !lineup.includes(p));
+      if (next) lineup.push(next); else break;
+    }
+    return lineup;
+  }
+  return state.activeField;
+}
+
+function renderPitchAndBench() {
+  const fieldPlayers = getDisplayedField();
+  const pitchEl = document.getElementById("pitchPlayers");
+
+  pitchEl.innerHTML = fieldPlayers.map((name, idx) => {
+    const pos = POSITIONS[idx] || { x: 50, y: 50 };
+    const isGk = idx === 0;
+    const isSel = state.selectedPlayer === name;
+    const min = state.minutes[name] || 0;
+    const initial = name.charAt(0).toUpperCase();
+    return `
+      <div class="player-node" style="left:${pos.x}%;top:${pos.y}%;" onclick="handlePlayerTap('${name.replace(/'/g, "\'")}')">
+        <div class="ball ${isGk ? 'gk' : 'field'} ${isSel ? 'selected' : ''}">
+          ${initial}
+          <div class="min-badge">${min}</div>
+        </div>
+        <div class="player-name">${name}</div>
+      </div>`;
+  }).join("");
+
+  const benchPlayers = state.players
+    .filter(p => !state.absent.includes(p) && !fieldPlayers.includes(p))
+    .sort((a, b) => (state.minutes[a] || 0) - (state.minutes[b] || 0));
+
+  const benchEl = document.getElementById("benchBar");
+  benchEl.innerHTML = benchPlayers.map(name => {
+    const isSel = state.selectedPlayer === name;
+    const min = state.minutes[name] || 0;
+    const initial = name.charAt(0).toUpperCase();
+    return `
+      <div class="bench-slot" onclick="handlePlayerTap('${name.replace(/'/g, "\'")}')">
+        <div class="ball bench ${isSel ? 'selected' : ''}">
+          ${initial}
+          <div class="min-badge">${min}</div>
+        </div>
+        <div class="player-name">${name}</div>
+      </div>`;
+  }).join("");
+}
+
+function handlePlayerTap(name) {
+  if (state.previewBlock !== null) {
+    state.previewBlock = null;
+  }
+  if (!state.selectedPlayer) {
+    state.selectedPlayer = name;
+  } else if (state.selectedPlayer === name) {
+    state.selectedPlayer = null;
+  } else {
+    const p1 = state.selectedPlayer;
+    const p2 = name;
+    const idx1 = state.activeField.indexOf(p1);
+    const idx2 = state.activeField.indexOf(p2);
+    if (idx1 !== -1 && idx2 !== -1) {
+      state.activeField[idx1] = p2;
+      state.activeField[idx2] = p1;
+    } else if (idx1 !== -1 && idx2 === -1) {
+      state.activeField[idx1] = p2;
+    } else if (idx1 === -1 && idx2 !== -1) {
+      state.activeField[idx2] = p1;
+    }
+    state.selectedPlayer = null;
+  }
+  saveState();
+  renderAll();
+}
+
+function renderSpelersTab() {
+  const present = state.players.filter(p => !state.absent.includes(p));
+  const absent = state.players.filter(p => state.absent.includes(p));
+
+  const presentHtml = present.map(name => `
+    <div class="list-row">
+      <div class="row-left">
+        <div class="dot-green"></div>
+        <div class="row-name">${name}</div>
+      </div>
+      <button class="circle-action btn-red" onclick="setAbsent('${name.replace(/'/g, "\'")}', true)">−</button>
+    </div>`).join("");
+
+  const absentHtml = absent.map(name => `
+    <div class="list-row">
+      <div class="row-left">
+        <div class="row-name" style="color:#a1a1aa;">${name}</div>
+      </div>
+      <button class="circle-action btn-green" onclick="setAbsent('${name.replace(/'/g, "\'")}', false)">+</button>
+    </div>`).join("");
+
+  const chipsHtml = state.players.map(name => `
+    <button class="del-chip" onclick="deletePlayer('${name.replace(/'/g, "\'")}')">✕ ${name}</button>
+  `).join("");
+
+  document.getElementById("tab-spelers").innerHTML = `
+    <div class="section-title">Aanwezig (${present.length})</div>
+    ${presentHtml}
+    <div class="section-title">Afwezig (${absent.length})</div>
+    ${absentHtml || '<div style="color:#71717a;font-weight:800;font-size:15px;margin-bottom:10px;">Niemand afwezig</div>'}
+    <div class="team-manage">
+      <div class="section-title" style="margin-top:0;">Team aanpassen</div>
+      <div class="add-form">
+        <input type="text" id="newPlayerInput" class="add-input" placeholder="Nieuwe speler naam...">
+        <button class="add-btn" onclick="addPlayer()">Toevoegen</button>
+      </div>
+      <div class="del-chip-wrap">${chipsHtml}</div>
+    </div>
+  `;
+}
+
+function setAbsent(name, makeAbsent) {
+  if (makeAbsent) {
+    if (!state.absent.includes(name)) state.absent.push(name);
+    const fIdx = state.activeField.indexOf(name);
+    if (fIdx !== -1) {
+      const replacement = state.players.find(p => !state.absent.includes(p) && !state.activeField.includes(p));
+      if (replacement) state.activeField[fIdx] = replacement;
+      else state.activeField.splice(fIdx, 1);
+    }
+  } else {
+    state.absent = state.absent.filter(p => p !== name);
+  }
+  saveState();
+  renderAll();
+}
+
+function addPlayer() {
+  const inp = document.getElementById("newPlayerInput");
+  const val = (inp.value || "").trim();
+  if (!val || state.players.includes(val)) return;
+  state.players.push(val);
+  state.minutes[val] = 0;
+  saveState();
+  renderAll();
+}
+
+function deletePlayer(name) {
+  state.players = state.players.filter(p => p !== name);
+  state.absent = state.absent.filter(p => p !== name);
+  state.activeField = state.activeField.filter(p => p !== name);
+  delete state.minutes[name];
+  saveState();
+  renderAll();
+}
+
+function renderSpeeltijdTab() {
+  const sorted = [...state.players].sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
+  document.getElementById("tab-speeltijd").innerHTML = sorted.map(name => `
+    <div class="list-row">
+      <div class="row-name">${name}</div>
+      <div class="row-min">${state.minutes[name] || 0} min</div>
+    </div>
+  `).join("");
+}
+
+function switchTab(tab) {
+  document.getElementById("tab-formatie").style.display = tab === "formatie" ? "block" : "none";
+  document.getElementById("tab-spelers").classList.toggle("active", tab === "spelers");
+  document.getElementById("tab-speeltijd").classList.toggle("active", tab === "speeltijd");
+  ["formatie", "spelers", "speeltijd"].forEach(t => {
+    document.getElementById("nav-" + t).classList.toggle("active", t === tab);
+  });
+  renderAll();
+}
+
+// Timer logica met timestamp (blijft kloppen bij vergrendeld scherm)
+setInterval(() => {
+  if (state.status === "Lopend" && state.lastTick) {
+    const now = Date.now();
+    const diffSec = Math.floor((now - state.lastTick) / 1000);
+    if (diffSec >= 1) {
+      const oldMin = Math.floor(state.elapsedSec / 60);
+      state.elapsedSec += diffSec;
+      state.lastTick += diffSec * 1000;
+      const newMin = Math.floor(state.elapsedSec / 60);
+      const addedMins = newMin - oldMin;
+      if (addedMins > 0) {
+        state.activeField.forEach(p => {
+          state.minutes[p] = (state.minutes[p] || 0) + addedMins;
+        });
+        saveState();
+        renderAll();
+      }
+    }
+  }
+}, 1000);
+
+function openTimeModal() {
+  document.getElementById("startPauseBtn").textContent = state.status === "Lopend" ? "⏸ Pauze" : "▶ Start Wedstrijd";
+  document.getElementById("durationBtn").textContent = `⏱ Wedstrijdduur: ${state.duration} min`;
+  document.getElementById("timeModal").classList.add("open");
+}
+
+function toggleTimer() {
+  if (state.status === "Lopend") {
+    state.status = "Pauze";
+    state.lastTick = null;
+  } else {
+    state.status = "Lopend";
+    state.lastTick = Date.now();
+  }
+  saveState();
+  closeModals();
+  renderAll();
+}
+
+function endMatch() {
+  state.status = "Einde";
+  state.lastTick = null;
+  saveState();
+  closeModals();
+  renderAll();
+}
+
+function toggleDuration() {
+  state.duration = state.duration === 80 ? 90 : 80;
+  document.getElementById("durationBtn").textContent = `⏱ Wedstrijdduur: ${state.duration} min`;
+  saveState();
+  renderHeader();
+}
+
+function toggleHomeAway() {
+  state.isHome = !state.isHome;
+  saveState();
+  closeModals();
+  renderHeader();
+}
+
+function resetMatch() {
+  state.status = "Klaar";
+  state.elapsedSec = 0;
+  state.lastTick = null;
+  state.spiritScore = 0;
+  state.oppScore = 0;
+  state.goals = [];
+  state.activeBlock = 0;
+  state.previewBlock = null;
+  state.selectedPlayer = null;
+  state.players.forEach(p => { state.minutes[p] = 0; });
+  const lineup = LINEUPS[0].filter(p => !state.absent.includes(p));
+  const available = state.players.filter(p => !state.absent.includes(p));
+  while (lineup.length < 11 && lineup.length < available.length) {
+    const next = available.find(p => !lineup.includes(p));
+    if (next) lineup.push(next); else break;
+  }
+  state.activeField = lineup;
+  saveState();
+  closeModals();
+  renderAll();
+}
+
+let tempScorer = null;
+let tempAssist = "Geen";
+
+function openSpiritGoalModal() {
+  tempScorer = null;
+  tempAssist = "Geen";
+  renderGoalPickers();
+  document.getElementById("spiritGoalModal").classList.add("open");
+}
+
+function renderGoalPickers() {
+  const onField = state.activeField;
+  document.getElementById("scorerGrid").innerHTML = onField.map(p => `
+    <button class="pick-btn ${tempScorer === p ? 'chosen' : ''}" onclick="selectScorer('${p.replace(/'/g, "\'")}')">${p}</button>
+  `).join("");
+
+  const assistOpts = ["Geen", ...onField.filter(p => p !== tempScorer)];
+  document.getElementById("assistGrid").innerHTML = assistOpts.map(p => `
+    <button class="pick-btn ${tempAssist === p ? 'chosen' : ''}" onclick="selectAssist('${p.replace(/'/g, "\'")}')">${p}</button>
+  `).join("");
+
+  document.getElementById("goalLog").innerHTML = state.goals.length
+    ? state.goals.map(g => `${g.min}' ⚽ ${g.scorer}${g.assist && g.assist !== 'Geen' ? ' (assist: ' + g.assist + ')' : ''}`).join("<br>")
+    : "Nog geen doelpunten geregistreerd";
+}
+
+function selectScorer(p) { tempScorer = p; if (tempAssist === p) tempAssist = "Geen"; renderGoalPickers(); }
+function selectAssist(p) { tempAssist = p; renderGoalPickers(); }
+
+function confirmSpiritGoal() {
+  state.spiritScore += 1;
+  const min = Math.floor(state.elapsedSec / 60);
+  state.goals.push({ min, scorer: tempScorer || "JO16-2", assist: tempAssist });
+  saveState();
+  closeModals();
+  renderHeader();
+}
+
+function removeSpiritGoal() {
+  if (state.spiritScore > 0) {
+    state.spiritScore -= 1;
+    state.goals.pop();
+    saveState();
+  }
+  closeModals();
+  renderHeader();
+}
+
+function openOppGoalModal() {
+  document.getElementById("oppGoalModal").classList.add("open");
+}
+
+function changeOppScore(delta) {
+  state.oppScore = Math.max(0, state.oppScore + delta);
+  saveState();
+  closeModals();
+  renderHeader();
+}
+
+function closeModals(e) {
+  if (!e || e.target.classList.contains("modal-backdrop")) {
+    document.querySelectorAll(".modal-backdrop").forEach(m => m.classList.remove("open"));
+  }
+}
+
+function renderAll() {
+  renderHeader();
+  renderBlocks();
+  renderPitchAndBench();
+  renderSpelersTab();
+  renderSpeeltijdTab();
+}
+
+loadState();
+renderAll();
+</script>
+</body>
+</html>
