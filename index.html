@@ -135,6 +135,21 @@
   .sm-row:last-child { border-bottom: none; }
   .sm-min { color: #facc15; font-weight: 900; }
 
+
+  /* Speeltijd tab & visual bar */
+  .speeltijd-card { background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 8px; }
+  .st-top-row { display: flex; justify-content: space-between; align-items: center; }
+  .st-name { font-size: 17px; font-weight: 900; color: #ffffff; }
+  .st-min { font-size: 17px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .st-bar-bg { width: 100%; height: 6px; background: #27272a; border-radius: 999px; overflow: hidden; position: relative; }
+  .st-bar-fill { height: 100%; background: #16a34a; border-radius: 999px; transition: width 0.3s ease; }
+  
+  /* Kleuren voor de minuut-getallen op basis van percentage */
+  .min-red { color: #ef4444; }     /* < 25% */
+  .min-yellow { color: #facc15; }  /* < 50% */
+  .min-green { color: #4ade80; }   /* < 75% */
+  .min-blue { color: #38bdf8; }    /* > 75% */
+
 </style>
 </head>
 <body>
@@ -222,7 +237,7 @@
       <div style="text-align:center; padding: 12px 0 20px;">
         <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:10px;">Developed by Daniel van Soest</p>
         <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:14px;">danielvs69@outlook.com</a>
-        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Versie 1.2</p>
+        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Versie 1.3</p>
       </div>
       <button class="modal-btn" onclick="closeModals()">Sluiten</button>
     </div>
@@ -716,14 +731,47 @@ function deletePlayer(name) {
 }
 
 function renderSpeeltijdTab() {
-  const sorted = [...state.players].sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
+  // Alleen aanwezige spelers
+  const present = state.players.filter(p => !state.absent.includes(p));
+  const sorted = present.sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
+  
+  // Bepaal de referentie voor de percentages: 
+  // We kunnen de max minuten van een speler nemen, of de actuele wedstrijdminuut (Math.max(1, Math.floor(state.elapsedSec / 60))).
+  // Zo hoef je vooraf geen totale speeltijd in te stellen!
+  const matchMin = Math.max(1, Math.floor(state.elapsedSec / 60));
+  const maxPlayerMin = sorted.length > 0 ? (state.minutes[sorted[0]] || 0) : 0;
+  const totalRef = Math.max(matchMin, maxPlayerMin, 1);
+
   const btnHtml = `<button class="modal-btn" style="background:#2563eb;margin-bottom:12px;" onclick="openSummaryModal()">📊 Wedstrijdoverzicht & Delen</button>`;
-  document.getElementById("tab-speeltijd").innerHTML = btnHtml + sorted.map(name => `
-    <div class="list-row">
-      <div class="row-name">${name}</div>
-      <div class="row-min">${state.minutes[name] || 0} min</div>
-    </div>
-  `).join("");
+  
+  const listHtml = sorted.map(name => {
+    const mins = state.minutes[name] || 0;
+    const pct = (mins / totalRef) * 100;
+    
+    // Kleurclass op basis van percentage van de wedstrijd
+    // < 25%: rood, < 50%: geel, < 75%: groen, > 75%: blauw
+    let colorClass = 'min-red';
+    if (pct >= 75) colorClass = 'min-blue';
+    else if (pct >= 50) colorClass = 'min-green';
+    else if (pct >= 25) colorClass = 'min-yellow';
+
+    // Relatieve breedte balk t.o.v. de speler met de meeste minuten (of maxPlayerMin)
+    const relMax = maxPlayerMin > 0 ? maxPlayerMin : 1;
+    const barWidth = Math.min(100, Math.max(4, (mins / relMax) * 100));
+
+    return `
+      <div class="speeltijd-card">
+        <div class="st-top-row">
+          <div class="st-name">${name}</div>
+          <div class="st-min ${colorClass}">${mins}'</div>
+        </div>
+        <div class="st-bar-bg">
+          <div class="st-bar-fill" style="width: ${barWidth}%;"></div>
+        </div>
+      </div>`;
+  }).join("");
+
+  document.getElementById("tab-speeltijd").innerHTML = btnHtml + listHtml;
 }
 
 function switchTab(tab) {
@@ -1116,51 +1164,38 @@ function openSummaryModal() {
   const timeline = buildTimelineData();
   let timelineHtml = '';
   if (timeline.length === 0) {
-    timelineHtml = '<div style="text-align:center;color:#71717a;font-size:13px;font-weight:800;padding:8px 0;">Geen doelpunten geregistreerd</div>';
+    timelineHtml = '<div style="text-align:center;color:#71717a;font-size:14px;font-weight:800;padding:12px 0;">Geen doelpunten geregistreerd</div>';
   } else {
     timelineHtml = timeline.map(item => {
       const assistTxt = (item.isSpirit && item.assist && item.assist !== 'Geen') ? `<span class="tl-assist">(${item.assist})</span>` : '';
       const pillClass = item.isSpirit ? 'team' : 'opp';
       if (item.isHomeGoal) {
         return `
-          <div class="tl-row left">
-            <span class="tl-min">${item.min}'</span>
+          <div class="tl-row left" style="font-size:15px;padding:4px 0;">
+            <span class="tl-min" style="font-size:15px;">${item.min}'</span>
             <span>⚽</span>
-            <span>${item.scorer} ${assistTxt}</span>
-            <span class="tl-pill ${pillClass}">${item.scoreStr}</span>
+            <span style="font-weight:900;">${item.scorer} ${assistTxt}</span>
+            <span class="tl-pill ${pillClass}" style="font-size:13px;padding:3px 10px;">${item.scoreStr}</span>
           </div>`;
       } else {
         return `
-          <div class="tl-row right">
-            <span>${item.scorer} ${assistTxt}</span>
-            <span class="tl-pill ${pillClass}">${item.scoreStr}</span>
+          <div class="tl-row right" style="font-size:15px;padding:4px 0;">
+            <span style="font-weight:900;">${item.scorer} ${assistTxt}</span>
+            <span class="tl-pill ${pillClass}" style="font-size:13px;padding:3px 10px;">${item.scoreStr}</span>
             <span>⚽</span>
-            <span class="tl-min">${item.min}'</span>
+            <span class="tl-min" style="font-size:15px;">${item.min}'</span>
           </div>`;
       }
     }).join("");
   }
 
-  const presentPlayers = state.players
-    .filter(p => !state.absent.includes(p))
-    .sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
-
-  const minutesHtml = presentPlayers.map(p => `
-    <div class="sm-row">
-      <span>${p}</span>
-      <span class="sm-min">${state.minutes[p] || 0} min</span>
-    </div>
-  `).join("");
-
   document.getElementById("summaryContent").innerHTML = `
-    <div class="summary-header-score">
-      <div class="summary-teams">${leftName} - ${rightName}</div>
-      <div class="summary-big-score">${leftScore} - ${rightScore}</div>
+    <div class="summary-header-score" style="padding:18px;">
+      <div class="summary-teams" style="font-size:15px;margin-bottom:6px;">${leftName} - ${rightName}</div>
+      <div class="summary-big-score" style="font-size:38px;">${leftScore} - ${rightScore}</div>
     </div>
-    <div class="summary-sub-title">Scoreverloop</div>
-    <div class="timeline-card">${timelineHtml}</div>
-    <div class="summary-sub-title">Speeltijd per speler</div>
-    <div class="summary-minutes-list">${minutesHtml}</div>
+    <div class="summary-sub-title" style="font-size:14px;margin-bottom:8px;">Scoreverloop</div>
+    <div class="timeline-card" style="padding:14px;gap:12px;">${timelineHtml}</div>
   `;
 
   document.getElementById("summaryModal").classList.add("open");
@@ -1220,7 +1255,7 @@ async function shareMatchSummary() {
   }
 }
 
-const CURRENT_APP_VERSION = "1.2";
+const CURRENT_APP_VERSION = "1.3";
 
 async function checkForUpdates() {
   try {
