@@ -213,7 +213,7 @@
       <div class="modal-title">Wedstrijd & Tijd</div>
       <button class="modal-btn green" id="startPauseBtn" onclick="toggleTimer()">▶ Start Wedstrijd</button>
       <button class="modal-btn amber" onclick="endMatch()">⏹ Einde Wedstrijd</button>
-      <button class="modal-btn" style="background:#2563eb;" onclick="openSummaryModal()">📊 Wedstrijdoverzicht & Delen</button>
+      <button class="modal-btn" style="background:#2563eb;" onclick="openSummaryModal()">📊 Wedstrijdoverzicht</button>
       <button class="modal-btn" onclick="toggleHomeAway()">⇄ Wissel Thuis / Uit</button>
       <button class="modal-btn red" onclick="resetMatch()">↻ Reset Wedstrijd</button>
       <button class="modal-btn" onclick="closeModals()">Sluiten</button>
@@ -225,7 +225,7 @@
     <div class="modal-box" onclick="event.stopPropagation()">
       <div class="modal-title">Wedstrijdoverzicht</div>
       <div id="summaryContent"></div>
-      <button class="modal-btn green" onclick="shareMatchSummary()">📤 Deel Overzicht (WhatsApp / Kopieer)</button>
+      <button class="modal-btn green" onclick="shareMatchSummary()">↗ Delen</button>
       <button class="modal-btn" onclick="closeModals()">Sluiten</button>
     </div>
   </div>
@@ -237,7 +237,7 @@
       <div style="text-align:center; padding: 12px 0 20px;">
         <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:10px;">Developed by Daniel van Soest</p>
         <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:14px;">danielvs69@outlook.com</a>
-        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Versie 1.3</p>
+        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Versie 1.4</p>
       </div>
       <button class="modal-btn" onclick="closeModals()">Sluiten</button>
     </div>
@@ -742,7 +742,7 @@ function renderSpeeltijdTab() {
   const maxPlayerMin = sorted.length > 0 ? (state.minutes[sorted[0]] || 0) : 0;
   const totalRef = Math.max(matchMin, maxPlayerMin, 1);
 
-  const btnHtml = `<button class="modal-btn" style="background:#2563eb;margin-bottom:12px;" onclick="openSummaryModal()">📊 Wedstrijdoverzicht & Delen</button>`;
+  const btnHtml = `<button class="modal-btn" style="background:#2563eb;margin-bottom:12px;" onclick="openSpeeltijdModal()">⏱️ Speeltijdoverzicht</button>`;
   
   const listHtml = sorted.map(name => {
     const mins = state.minutes[name] || 0;
@@ -1255,7 +1255,77 @@ async function shareMatchSummary() {
   }
 }
 
-const CURRENT_APP_VERSION = "1.3";
+
+function openSpeeltijdModal() {
+  const present = state.players.filter(p => !state.absent.includes(p));
+  const sorted = present.sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
+  
+  const matchMin = Math.max(1, Math.floor(state.elapsedSec / 60));
+  const maxPlayerMin = sorted.length > 0 ? (state.minutes[sorted[0]] || 0) : 0;
+  const totalRef = Math.max(matchMin, maxPlayerMin, 1);
+
+  const listHtml = sorted.map(name => {
+    const mins = state.minutes[name] || 0;
+    const pct = (mins / totalRef) * 100;
+    let colorClass = 'min-red';
+    if (pct >= 75) colorClass = 'min-blue';
+    else if (pct >= 50) colorClass = 'min-green';
+    else if (pct >= 25) colorClass = 'min-yellow';
+
+    const relMax = maxPlayerMin > 0 ? maxPlayerMin : 1;
+    const barWidth = Math.min(100, Math.max(4, (mins / relMax) * 100));
+
+    return `
+      <div class="speeltijd-card" style="margin-bottom:6px;">
+        <div class="st-top-row">
+          <div class="st-name" style="font-size:15px;">${name}</div>
+          <div class="st-min ${colorClass}" style="font-size:15px;">${mins}'</div>
+        </div>
+        <div class="st-bar-bg" style="height:5px;">
+          <div class="st-bar-fill" style="width: ${barWidth}%;"></div>
+        </div>
+      </div>`;
+  }).join("");
+
+  document.getElementById("speeltijdModalContent").innerHTML = `
+    <div style="max-height:55vh;overflow-y:auto;padding-right:2px;">
+      ${listHtml}
+    </div>
+  `;
+
+  document.getElementById("speeltijdModal").classList.add("open");
+}
+
+async function shareSpeeltijdSummary() {
+  const teamLabel = state.teamName || "JO16-2";
+  let text = `⏱️ *Speeltijdoverzicht ${teamLabel}*\n\n`;
+
+  const presentPlayers = state.players
+    .filter(p => !state.absent.includes(p))
+    .sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
+
+  presentPlayers.forEach(p => {
+    text += `• ${p}: ${state.minutes[p] || 0}'\n`;
+  });
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: `Speeltijdoverzicht ${teamLabel}`, text });
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    alert("Speeltijdoverzicht gekopieerd naar klembord!");
+  } catch (e) {
+    alert(text);
+  }
+}
+
+const CURRENT_APP_VERSION = "1.4";
 
 async function checkForUpdates() {
   try {
