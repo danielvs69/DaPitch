@@ -247,7 +247,7 @@
       <div style="text-align:center; padding: 12px 0 20px;">
         <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:10px;">Developed by Daniel van Soest</p>
         <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:14px;">danielvs69@outlook.com</a>
-        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Versie 1.8</p>
+        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Versie 2.0</p>
       </div>
       <button class="modal-btn" onclick="closeModals()">Sluiten</button>
     </div>
@@ -260,7 +260,7 @@
       <label style="font-size:12px;color:#a1a1aa;margin-bottom:4px;display:block;">Teamnaam:</label>
       <input type="text" id="teamNameInput" class="add-input" style="width:100%;margin-bottom:14px;" placeholder="Bijv. JO16-2">
       
-      <label style="font-size:12px;color:#a1a1aa;margin-bottom:6px;display:block;">Clublogo (V.V. Spirit):</label>
+      <label style="font-size:12px;color:#a1a1aa;margin-bottom:6px;display:block;">Clublogo:</label>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
         <div id="modalLogoPreview" style="width:52px;height:52px;border-radius:50%;background:#fff;border:2px solid #facc15;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
         <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
@@ -268,7 +268,7 @@
       </div>
 
       <button class="modal-btn green" onclick="saveTeamSettings()">Opslaan</button>
-      <button class="modal-btn red" onclick="resetFullTeam()">🔄 Reset Team (Nieuwe ploeg)</button>
+      
       <button class="modal-btn" onclick="closeModals()">Sluiten</button>
     </div>
   </div>
@@ -339,11 +339,7 @@
   </div>
 
 <script>
-const DEFAULT_PLAYERS = [
-  "Boaz", "Gijs", "Djim", "Thijmen", "Mees", "Hugo", "Rohan",
-  "Danilo", "Sven", "Thijs", "Vinnie", "Mads", "Mischa", "Omer",
-  "Tycho", "Jesse", "Mohammed"
-];
+const DEFAULT_PLAYERS = [];
 
 const POSITIONS_11_433 = [
   { x: 50, y: 90, isGk: true },
@@ -412,20 +408,14 @@ const POSITIONS_6_212 = [
 let POSITIONS = POSITIONS_11_433;
 
 let LINEUPS = {
-  0:  ["Boaz", "Hugo", "Gijs", "Djim", "Mees", "Jesse", "Danilo", "Sven", "Mads", "Tycho", "Mohammed"],
-  16: ["Boaz", "Hugo", "Gijs", "Djim", "Mees", "Omer", "Thijs", "Vinnie", "Mischa", "Tycho", "Mohammed"],
-  27: ["Boaz", "Rohan", "Thijmen", "Gijs", "Mees", "Omer", "Thijs", "Vinnie", "Mischa", "Tycho", "Mohammed"],
-  32: ["Boaz", "Rohan", "Thijmen", "Gijs", "Mees", "Mischa", "Danilo", "Thijs", "Mads", "Vinnie", "Jesse"],
-  48: ["Boaz", "Rohan", "Thijmen", "Gijs", "Mees", "Omer", "Danilo", "Sven", "Mohammed", "Tycho", "Jesse"],
-  53: ["Boaz", "Hugo", "Thijmen", "Djim", "Rohan", "Omer", "Danilo", "Sven", "Mohammed", "Tycho", "Jesse"],
-  64: ["Boaz", "Hugo", "Thijmen", "Djim", "Rohan", "Mischa", "Thijs", "Sven", "Mads", "Vinnie", "Omer"]
+  0: []
 };
 
 let state = {
-  players: [...DEFAULT_PLAYERS],
+  players: [],
   absent: [],
   minutes: {},
-  activeField: [...LINEUPS[0]],
+  activeField: [],
   activeBlock: 0,
   previewBlock: null,
   selectedPlayer: null,
@@ -436,7 +426,7 @@ let state = {
   elapsedSec: 0,
   lastTick: null,
   goals: [],
-  teamName: "JO16-2",
+  teamName: "Mijn Team",
   customLogo: "IMG_0119.jpeg",
   formationType: "11v11_433",
   formationCategory: "11v11"
@@ -447,12 +437,12 @@ function initMinutes() {
 }
 
 function saveState() {
-  try { localStorage.setItem("spirit_coach_state_v4", JSON.stringify({ state, LINEUPS })); } catch(e) {}
+  try { localStorage.setItem("spirit_coach_state_v6", JSON.stringify({ state, LINEUPS })); } catch(e) {}
 }
 
 function loadState() {
   try {
-    const raw = localStorage.getItem("spirit_coach_state_v4") || localStorage.getItem("spirit_jo16_2_state_v2") || localStorage.getItem("spirit_jo16_2_state_v1");
+    const raw = localStorage.getItem("spirit_coach_state_v6") || localStorage.getItem("spirit_jo16_2_state_v2") || localStorage.getItem("spirit_jo16_2_state_v1");
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.state) {
@@ -491,20 +481,8 @@ function formatTimeMMSS(totalSec) {
 }
 
 function getLogoHTML() {
-  if (state.customLogo) {
-    return `<img src="${state.customLogo}" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2746%27 fill=%27%23facc15%27/%3E%3C/svg%3E';" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-  }
-  return `<svg viewBox="0 0 100 100" width="46" height="46">
-    <circle cx="50" cy="50" r="46" fill="#facc15" stroke="#000000" stroke-width="4"/>
-    <path d="M50 20 L68 32 L61 54 L39 54 L32 32 Z" fill="#000000"/>
-    <path d="M50 20 L50 4 L65 14 Z" fill="#000000"/>
-    <path d="M50 20 L50 4 L35 14 Z" fill="#000000"/>
-    <path d="M68 32 L88 28 L92 46 Z" fill="#000000"/>
-    <path d="M32 32 L12 28 L8 46 Z" fill="#000000"/>
-    <path d="M61 54 L82 68 L70 88 Z" fill="#000000"/>
-    <path d="M39 54 L18 68 L30 88 Z" fill="#000000"/>
-    <path d="M39 54 L50 78 L61 54 Z" fill="#000000"/>
-  </svg>`;
+  const logoSrc = state.customLogo || "IMG_0119.jpeg";
+  return `<img src="${logoSrc}" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2746%27 fill=%27%23facc15%27/%3E%3C/svg%3E';" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
 }
 
 function renderHeader() {
@@ -838,7 +816,7 @@ function saveTeamSettings() {
 
 function resetFullTeam() {
   if (confirm("Weet je zeker dat je het volledige team en alle opgeslagen line-ups wilt wissen om een nieuw team te starten?")) {
-    localStorage.removeItem("spirit_coach_state_v4");
+    localStorage.removeItem("spirit_coach_state_v6");
     localStorage.removeItem("spirit_jo16_2_state_v2");
     localStorage.removeItem("spirit_jo16_2_state_v1");
     location.reload();
@@ -1330,7 +1308,7 @@ async function shareSpeeltijdSummary() {
   }
 }
 
-const CURRENT_APP_VERSION = "1.8";
+const CURRENT_APP_VERSION = "2.0";
 
 async function checkForUpdates() {
   try {
