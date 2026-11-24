@@ -115,6 +115,26 @@
   .update-banner.show { display: flex; }
   .update-btn { background: #000000; color: #ffffff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 950; cursor: pointer; }
 
+
+  /* Match Summary / Wedstrijdoverzicht */
+  .summary-header-score { background: #242427; border: 1px solid #38383d; border-radius: 16px; padding: 14px; text-align: center; margin-bottom: 14px; }
+  .summary-teams { font-size: 14px; font-weight: 800; color: #a1a1aa; margin-bottom: 4px; }
+  .summary-big-score { font-size: 32px; font-weight: 900; color: #ffffff; letter-spacing: 1px; }
+  .timeline-card { background: #18181b; border: 1px solid #2c2c2e; border-radius: 14px; padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .tl-row { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; }
+  .tl-row.left { justify-content: flex-start; color: #d4d4d8; }
+  .tl-row.right { justify-content: flex-end; color: #ffffff; }
+  .tl-min { font-weight: 900; color: #ffffff; font-variant-numeric: tabular-nums; }
+  .tl-assist { color: #a1a1aa; font-weight: 700; }
+  .tl-pill { padding: 2px 9px; border-radius: 999px; border: 1px solid #52525b; background: #27272a; font-size: 12px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .tl-pill.team { color: #4ade80; }
+  .tl-pill.opp { color: #f87171; }
+  .summary-sub-title { font-size: 13px; font-weight: 900; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; margin: 10px 0 6px; }
+  .summary-minutes-list { background: #18181b; border: 1px solid #2c2c2e; border-radius: 14px; padding: 8px 12px; margin-bottom: 14px; }
+  .sm-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #27272a; font-size: 14px; font-weight: 800; }
+  .sm-row:last-child { border-bottom: none; }
+  .sm-min { color: #facc15; font-weight: 900; }
+
 </style>
 </head>
 <body>
@@ -178,8 +198,19 @@
       <div class="modal-title">Wedstrijd & Tijd</div>
       <button class="modal-btn green" id="startPauseBtn" onclick="toggleTimer()">▶ Start Wedstrijd</button>
       <button class="modal-btn amber" onclick="endMatch()">⏹ Einde Wedstrijd</button>
+      <button class="modal-btn" style="background:#2563eb;" onclick="openSummaryModal()">📊 Wedstrijdoverzicht & Delen</button>
       <button class="modal-btn" onclick="toggleHomeAway()">⇄ Wissel Thuis / Uit</button>
       <button class="modal-btn red" onclick="resetMatch()">↻ Reset Wedstrijd</button>
+      <button class="modal-btn" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
+  <!-- Wedstrijdoverzicht & Delen Modal -->
+  <div class="modal-backdrop" id="summaryModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">Wedstrijdoverzicht</div>
+      <div id="summaryContent"></div>
+      <button class="modal-btn green" onclick="shareMatchSummary()">📤 Deel Overzicht (WhatsApp / Kopieer)</button>
       <button class="modal-btn" onclick="closeModals()">Sluiten</button>
     </div>
   </div>
@@ -191,7 +222,7 @@
       <div style="text-align:center; padding: 12px 0 20px;">
         <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:10px;">Developed by Daniel van Soest</p>
         <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:14px;">danielvs69@outlook.com</a>
-        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Versie 1.1</p>
+        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Versie 1.2</p>
       </div>
       <button class="modal-btn" onclick="closeModals()">Sluiten</button>
     </div>
@@ -686,7 +717,8 @@ function deletePlayer(name) {
 
 function renderSpeeltijdTab() {
   const sorted = [...state.players].sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
-  document.getElementById("tab-speeltijd").innerHTML = sorted.map(name => `
+  const btnHtml = `<button class="modal-btn" style="background:#2563eb;margin-bottom:12px;" onclick="openSummaryModal()">📊 Wedstrijdoverzicht & Delen</button>`;
+  document.getElementById("tab-speeltijd").innerHTML = btnHtml + sorted.map(name => `
     <div class="list-row">
       <div class="row-name">${name}</div>
       <div class="row-min">${state.minutes[name] || 0} min</div>
@@ -883,6 +915,7 @@ function endMatch() {
   saveState();
   closeModals();
   renderAll();
+  openSummaryModal();
 }
 
 function toggleHomeAway() {
@@ -938,8 +971,9 @@ function renderGoalPickers() {
     <button class="pick-btn ${tempAssist === p ? 'chosen' : ''}" onclick="selectAssist('${p.replace(/'/g, "'")}')">${p}</button>
   `).join("");
 
-  document.getElementById("goalLog").innerHTML = state.goals.length
-    ? state.goals.map(g => `${g.min}' ⚽ ${g.scorer}${g.assist && g.assist !== 'Geen' ? ' (assist: ' + g.assist + ')' : ''}`).join("<br>")
+  const spiritGoals = state.goals.filter(g => !g.team || g.team === 'spirit');
+  document.getElementById("goalLog").innerHTML = spiritGoals.length
+    ? spiritGoals.map(g => `${g.min}' ⚽ ${g.scorer}${g.assist && g.assist !== 'Geen' ? ' (assist: ' + g.assist + ')' : ''}`).join("<br>")
     : "Nog geen doelpunten geregistreerd";
 }
 
@@ -949,7 +983,7 @@ function selectAssist(p) { tempAssist = p; renderGoalPickers(); }
 function confirmSpiritGoal() {
   state.spiritScore += 1;
   const min = Math.floor(state.elapsedSec / 60);
-  state.goals.push({ min, scorer: tempScorer || state.teamName, assist: tempAssist });
+  state.goals.push({ team: 'spirit', min, scorer: tempScorer || state.teamName, assist: tempAssist });
   saveState();
   closeModals();
   renderHeader();
@@ -958,7 +992,12 @@ function confirmSpiritGoal() {
 function removeSpiritGoal() {
   if (state.spiritScore > 0) {
     state.spiritScore -= 1;
-    state.goals.pop();
+    for (let i = state.goals.length - 1; i >= 0; i--) {
+      if (!state.goals[i].team || state.goals[i].team === 'spirit') {
+        state.goals.splice(i, 1);
+        break;
+      }
+    }
     saveState();
   }
   closeModals();
@@ -970,7 +1009,19 @@ function openOppGoalModal() {
 }
 
 function changeOppScore(delta) {
-  state.oppScore = Math.max(0, state.oppScore + delta);
+  if (delta > 0) {
+    state.oppScore += 1;
+    const min = Math.floor(state.elapsedSec / 60);
+    state.goals.push({ team: 'opp', min, scorer: 'Tegenstander', assist: 'Geen' });
+  } else if (delta < 0 && state.oppScore > 0) {
+    state.oppScore -= 1;
+    for (let i = state.goals.length - 1; i >= 0; i--) {
+      if (state.goals[i].team === 'opp') {
+        state.goals.splice(i, 1);
+        break;
+      }
+    }
+  }
   saveState();
   closeModals();
   renderHeader();
@@ -1038,7 +1089,138 @@ function applyAppIcon() {
 }
 
 
-const CURRENT_APP_VERSION = "1.1";
+
+function buildTimelineData() {
+  let homeS = 0;
+  let awayS = 0;
+  return state.goals.map(g => {
+    const isSpirit = !g.team || g.team === 'spirit';
+    const isHomeGoal = (state.isHome && isSpirit) || (!state.isHome && !isSpirit);
+    if (isHomeGoal) homeS++; else awayS++;
+    return {
+      ...g,
+      isSpirit,
+      isHomeGoal,
+      scoreStr: `${homeS}-${awayS}`
+    };
+  });
+}
+
+function openSummaryModal() {
+  const teamLabel = state.teamName || "JO16-2";
+  const leftName = state.isHome ? teamLabel : "Tegenstander";
+  const rightName = state.isHome ? "Tegenstander" : teamLabel;
+  const leftScore = state.isHome ? state.spiritScore : state.oppScore;
+  const rightScore = state.isHome ? state.oppScore : state.spiritScore;
+
+  const timeline = buildTimelineData();
+  let timelineHtml = '';
+  if (timeline.length === 0) {
+    timelineHtml = '<div style="text-align:center;color:#71717a;font-size:13px;font-weight:800;padding:8px 0;">Geen doelpunten geregistreerd</div>';
+  } else {
+    timelineHtml = timeline.map(item => {
+      const assistTxt = (item.isSpirit && item.assist && item.assist !== 'Geen') ? `<span class="tl-assist">(${item.assist})</span>` : '';
+      const pillClass = item.isSpirit ? 'team' : 'opp';
+      if (item.isHomeGoal) {
+        return `
+          <div class="tl-row left">
+            <span class="tl-min">${item.min}'</span>
+            <span>⚽</span>
+            <span>${item.scorer} ${assistTxt}</span>
+            <span class="tl-pill ${pillClass}">${item.scoreStr}</span>
+          </div>`;
+      } else {
+        return `
+          <div class="tl-row right">
+            <span>${item.scorer} ${assistTxt}</span>
+            <span class="tl-pill ${pillClass}">${item.scoreStr}</span>
+            <span>⚽</span>
+            <span class="tl-min">${item.min}'</span>
+          </div>`;
+      }
+    }).join("");
+  }
+
+  const presentPlayers = state.players
+    .filter(p => !state.absent.includes(p))
+    .sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
+
+  const minutesHtml = presentPlayers.map(p => `
+    <div class="sm-row">
+      <span>${p}</span>
+      <span class="sm-min">${state.minutes[p] || 0} min</span>
+    </div>
+  `).join("");
+
+  document.getElementById("summaryContent").innerHTML = `
+    <div class="summary-header-score">
+      <div class="summary-teams">${leftName} - ${rightName}</div>
+      <div class="summary-big-score">${leftScore} - ${rightScore}</div>
+    </div>
+    <div class="summary-sub-title">Scoreverloop</div>
+    <div class="timeline-card">${timelineHtml}</div>
+    <div class="summary-sub-title">Speeltijd per speler</div>
+    <div class="summary-minutes-list">${minutesHtml}</div>
+  `;
+
+  document.getElementById("summaryModal").classList.add("open");
+}
+
+async function shareMatchSummary() {
+  const teamLabel = state.teamName || "JO16-2";
+  const leftName = state.isHome ? teamLabel : "Tegenstander";
+  const rightName = state.isHome ? "Tegenstander" : teamLabel;
+  const leftScore = state.isHome ? state.spiritScore : state.oppScore;
+  const rightScore = state.isHome ? state.oppScore : state.spiritScore;
+
+  let text = `⚽ *Wedstrijdoverzicht ${leftName} - ${rightName}*
+`;
+  text += `Eindstand: *${leftScore} - ${rightScore}*
+
+`;
+
+  const timeline = buildTimelineData();
+  if (timeline.length > 0) {
+    text += `*Scoreverloop:*
+`;
+    timeline.forEach(item => {
+      const assistStr = (item.isSpirit && item.assist && item.assist !== 'Geen') ? ` (${item.assist})` : '';
+      text += `${item.min}' ⚽ ${item.scorer}${assistStr} [${item.scoreStr}]
+`;
+    });
+    text += `
+`;
+  }
+
+  const presentPlayers = state.players
+    .filter(p => !state.absent.includes(p))
+    .sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
+
+  text += `*Speeltijd:*
+`;
+  presentPlayers.forEach(p => {
+    text += `• ${p}: ${state.minutes[p] || 0} min
+`;
+  });
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: `Uitslag ${leftName} - ${rightName}`, text });
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    alert("Wedstrijdoverzicht gekopieerd naar klembord! Je kunt het nu plakken in WhatsApp.");
+  } catch (e) {
+    alert(text);
+  }
+}
+
+const CURRENT_APP_VERSION = "1.2";
 
 async function checkForUpdates() {
   try {
