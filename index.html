@@ -1,255 +1,940 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Team Coach App - Spirit</title>
-    <!-- Tailwind CSS voor strakke styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- PWA / Apple Touch Icon configuratie met het geüploade logo -->
-    <link rel="apple-touch-icon" href="IMG_0119.jpeg">
-    <link rel="icon" type="image/jpeg" href="IMG_0119.jpeg">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title id="app-meta-title">V.V. Spirit JO16-2 Coach</title>
+<link rel="apple-touch-icon" id="app-icon-link" href="IMG_0119.jpeg">
+<link rel="icon" type="image/jpeg" href="IMG_0119.jpeg">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  body { background-color: #111113; color: #ffffff; display: flex; flex-direction: column; min-height: 100vh; padding-bottom: 120px; user-select: none; }
+  
+  /* Header */
+  .header-card { background: #1c1c1e; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2c2c2e; }
+  .team-col { display: flex; flex-direction: column; align-items: center; width: 64px; gap: 4px; cursor: pointer; }
+  .spirit-badge { width: 52px; height: 52px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; border: 2px solid #facc15; overflow: hidden; }
+  .opp-badge { width: 52px; height: 52px; border-radius: 50%; background: #27272a; border: 2px solid #3f3f46; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: #a1a1aa; }
+  .opp-badge:active { transform: scale(0.94); border-color: #facc15; color: #ffffff; }
+  .team-label { font-size: 13px; font-weight: 900; color: #ffffff; letter-spacing: 0.3px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 64px; }
+  
+  .score-pill { flex: 1; margin: 0 8px; background: #242427; border: 1px solid #38383d; border-radius: 999px; height: 62px; display: flex; align-items: center; justify-content: space-between; padding: 4px; }
+  .score-circle { width: 52px; height: 52px; border-radius: 50%; background: #09090b; border: 2px solid #3f3f46; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; color: #ffffff; cursor: pointer; }
+  .score-circle:active { transform: scale(0.94); border-color: #facc15; }
+  .time-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
+  .time-display { font-size: 23px; font-weight: 900; color: #ffffff; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .status-pill { margin-top: 3px; font-size: 11px; font-weight: 800; color: #d4d4d8; background: #323236; padding: 2px 8px; border-radius: 999px; }
+  .status-pill.running { background: #16a34a; color: #ffffff; }
+  .status-pill.ended { background: #dc2626; color: #ffffff; }
+
+  /* Line-up blokken bar */
+  .blocks-bar { background: #18181b; padding: 10px 8px; display: flex; justify-content: space-around; align-items: center; border-bottom: 1px solid #27272a; overflow-x: auto; }
+  .block-btn { min-width: 38px; height: 38px; padding: 0 8px; border-radius: 50%; background: #27272a; border: 2px solid #52525b; color: #ffffff; font-size: 14px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; flex-shrink: 0; }
+  .block-btn.active { background: #16a34a; border-color: #4ade80; box-shadow: 0 0 10px rgba(22,163,74,0.5); }
+  .block-btn.preview { background: #facc15; border-color: #ffffff; color: #000000; transform: scale(1.08); }
+
+  /* Vierkant Veld */
+  .pitch-wrapper { width: 100%; aspect-ratio: 1 / 1; background: #16a34a; position: relative; overflow: hidden; border-top: 2px solid rgba(255,255,255,0.45); border-bottom: 2px solid rgba(255,255,255,0.45); }
+  .pitch-lines { position: absolute; inset: 8px; border: 2px solid rgba(255,255,255,0.45); pointer-events: none; }
+  .half-line { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.45); }
+  .center-circle { position: absolute; top: 50%; left: 50%; width: 22%; height: 22%; transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,0.45); border-radius: 50%; }
+  .box-top { position: absolute; top: 0; left: 24%; width: 52%; height: 16%; border: 2px solid rgba(255,255,255,0.45); border-top: none; }
+  .box-bottom { position: absolute; bottom: 0; left: 24%; width: 52%; height: 16%; border: 2px solid rgba(255,255,255,0.45); border-bottom: none; }
+
+  /* Speler Node */
+  .player-node { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; cursor: pointer; z-index: 2; }
+  .ball { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; position: relative; border: 2px solid rgba(0,0,0,0.35); }
+  .ball.field { background: #facc15; color: #000000; }
+  .ball.gk { background: #2563eb; color: #ffffff; border-color: #ffffff; }
+  .ball.bench { background: #27272a; color: #ffffff; border: 2px solid #ffffff; }
+  .ball.selected { box-shadow: 0 0 0 4px #ffffff, 0 0 14px #facc15; transform: scale(1.1); }
+  .min-badge { position: absolute; top: -5px; right: -7px; min-width: 19px; height: 19px; padding: 0 3px; border-radius: 999px; background: #ffffff; color: #000000; border: 1.5px solid #000000; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+  
+  .player-node .player-name { margin-top: 3px; font-size: 14px; font-weight: 900; color: #ffffff; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.65); }
+  .bench-slot .player-name { margin-top: 3px; font-size: 12px; font-weight: 900; color: #ffffff; white-space: nowrap; }
+
+  /* Wisselbank */
+  .bench-bar { background: #052e16; padding: 12px 4px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; border-bottom: 1px solid #14532d; }
+  .bench-slot { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+
+  /* Extra actie balk tussen bank en tabs */
+  .lineup-actions-bar { background: #18181b; padding: 10px 12px; display: flex; gap: 8px; border-bottom: 1px solid #27272a; }
+  .action-chip { flex: 1; background: #27272a; border: 1px solid #3f3f46; color: #ffffff; padding: 10px 6px; border-radius: 10px; font-size: 13px; font-weight: 900; text-align: center; cursor: pointer; }
+  .action-chip:active { background: #3f3f46; border-color: #facc15; color: #facc15; }
+
+  /* Tabbladen Spelers & Speeltijd */
+  .tab-view { display: none; padding: 12px; flex: 1; }
+  .tab-view.active { display: block; }
+  .section-title { font-size: 16px; font-weight: 900; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; margin: 10px 0 8px; }
+  .list-row { background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .row-left { display: flex; align-items: center; gap: 10px; }
+  .dot-green { width: 12px; height: 12px; border-radius: 50%; background: #16a34a; flex-shrink: 0; }
+  .row-name { font-size: 17px; font-weight: 900; color: #ffffff; }
+  .row-min { font-size: 17px; font-weight: 900; color: #facc15; }
+  .circle-action { width: 34px; height: 34px; border-radius: 50%; border: none; font-size: 20px; font-weight: 900; color: #ffffff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .btn-red { background: #ef4444; }
+  .btn-green { background: #16a34a; }
+
+  .team-manage { margin-top: 20px; background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 12px; }
+  .add-form { display: flex; gap: 8px; margin-bottom: 12px; }
+  .add-input { flex: 1; background: #27272a; border: 1px solid #3f3f46; border-radius: 10px; padding: 10px 12px; color: #ffffff; font-size: 16px; font-weight: 800; }
+  .add-btn { background: #16a34a; color: #ffffff; border: none; border-radius: 10px; padding: 0 16px; font-size: 15px; font-weight: 900; cursor: pointer; }
+  .del-chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+  .del-chip { background: #27272a; border: 1px solid #3f3f46; color: #e4e4e7; border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 800; cursor: pointer; }
+
+  /* Onderste Navigatie */
+  .bottom-nav { position: fixed; bottom: 45px; left: 0; right: 0; height: 65px; background: #18181b; border-top: 1px solid #2c2c2e; border-bottom: 1px solid #2c2c2e; display: grid; grid-template-columns: repeat(3, 1fr); z-index: 20; box-shadow: 0 -4px 10px rgba(0,0,0,0.5); }
+  .nav-btn { background: none; border: none; color: #a1a1aa; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; }
+  .nav-btn.active { color: #16a34a; }
+  .nav-btn svg { width: 22px; height: 22px; stroke-width: 2.4; }
+  .nav-btn span { font-size: 13px; font-weight: 900; }
+
+  /* Modals */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.78); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .modal-backdrop.open { display: flex; }
+  .modal-box { background: #1c1c1e; border: 1px solid #3f3f46; border-radius: 18px; width: 100%; max-width: 380px; padding: 18px; max-height: 85vh; overflow-y: auto; }
+  .modal-title { font-size: 19px; font-weight: 900; margin-bottom: 14px; text-align: center; }
+  .modal-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: 900; margin-bottom: 10px; cursor: pointer; color: #ffffff; background: #27272a; }
+  .modal-btn.green { background: #16a34a; }
+  .modal-btn.amber { background: #d97706; }
+  .modal-btn.red { background: #dc2626; }
+  .picker-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+  .pick-btn { padding: 12px 8px; border-radius: 10px; border: 2px solid #3f3f46; background: #27272a; color: #ffffff; font-size: 15px; font-weight: 900; cursor: pointer; }
+  .pick-btn.chosen { border-color: #facc15; background: #422006; color: #facc15; }
+  .goal-log { margin-top: 10px; border-top: 1px solid #2c2c2e; padding-top: 8px; font-size: 13px; font-weight: 800; color: #d4d4d8; }
+</style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans select-none">
+<body>
 
-    <!-- Header -->
-    <header class="bg-slate-800 border-b border-slate-700 p-4 flex items-center justify-between sticky top-0 z-50">
-        <div class="flex items-center space-x-3">
-            <img src="IMG_0119.jpeg" alt="Spirit Logo" class="w-10 h-10 object-cover rounded-full bg-white p-0.5 shadow">
-            <div>
-                <h1 id="team-title" class="font-bold text-lg text-white leading-tight">Spirit JO16-2</h1>
-                <p class="text-xs text-slate-400">Match & Wissel Coach</p>
-            </div>
-        </div>
-        <button onclick="openTeamSettings()" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg border border-slate-600 font-medium transition">
-            Team / Reset
-        </button>
-    </header>
+  <!-- Header -->
+  <div class="header-card" id="headerCard"></div>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 p-4 max-w-md mx-auto w-full flex flex-col justify-center items-center text-center space-y-6">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl w-full space-y-4">
-            <h2 class="text-xl font-bold text-emerald-400">Coach Dashboard</h2>
-            <p class="text-sm text-slate-300">Beheer hier je line-ups en bedien de vrije wedstrijdtimer.</p>
-            
-            <!-- Line-up actieknoppen -->
-            <div class="grid grid-cols-2 gap-3 pt-2">
-                <button onclick="addLineUp()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-3 rounded-xl shadow transition flex items-center justify-center space-x-1">
-                    <span>+ line-up</span>
-                </button>
-                <button onclick="openDeleteLineUpModal()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 font-semibold py-2.5 px-3 rounded-xl shadow transition flex items-center justify-center space-x-1">
-                    <span>- line-up</span>
-                </button>
-            </div>
-
-            <!-- Vrije Timer Display & Besturing -->
-            <div class="bg-slate-900/60 border border-slate-700 rounded-xl p-4 space-y-3 mt-4">
-                <div id="match-timer-display" class="text-3xl font-mono font-bold text-white tracking-wider">00:00</div>
-                <div class="grid grid-cols-3 gap-2">
-                    <button id="timer-start-btn" onclick="toggleTimer()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 px-2 rounded-lg transition">
-                        Start
-                    </button>
-                    <button onclick="pauseTimer()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold py-2 px-2 rounded-lg transition">
-                        Pauze
-                    </button>
-                    <button onclick="endMatch()" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2 px-2 rounded-lg transition">
-                        Einde
-                    </button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal / Instellingen & Reset -->
-    <div id="settings-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
-            <h3 class="text-lg font-bold text-white">Team & Instellingen</h3>
-            <div>
-                <label class="block text-xs text-slate-400 mb-1">Teamnaam:</label>
-                <input type="text" id="team-name-input" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500" value="Spirit JO16-2">
-            </div>
-            
-            <div class="pt-2 border-t border-slate-700 flex flex-col space-y-2">
-                <button onclick="saveTeamName()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold py-2.5 rounded-xl transition">
-                    Opslaan
-                </button>
-                <button onclick="resetApp()" class="w-full bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 text-sm font-semibold py-2.5 rounded-xl transition">
-                    🔄 Reset App (Leegmaken & Nieuw Team)
-                </button>
-                <button onclick="closeTeamSettings()" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-medium py-2 rounded-xl transition">
-                    Annuleren
-                </button>
-            </div>
-        </div>
+  <!-- Tab 1: Line-up -->
+  <div id="tab-formatie">
+    <div class="blocks-bar" id="blocksBar"></div>
+    <div class="pitch-wrapper" id="pitchWrapper">
+      <div class="pitch-lines">
+        <div class="half-line"></div>
+        <div class="center-circle"></div>
+        <div class="box-top"></div>
+        <div class="box-bottom"></div>
+      </div>
+      <div id="pitchPlayers"></div>
     </div>
-
-    <!-- Modal / Verwijder Line-up (- line-up) -->
-    <div id="delete-lineup-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
-            <h3 class="text-lg font-bold text-white">Selecteer line-up om te verwijderen</h3>
-            <div>
-                <label class="block text-xs text-slate-400 mb-1">Kies line-up:</label>
-                <select id="lineup-select-delete" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-rose-500">
-                    <!-- Wordt dynamisch gevuld -->
-                </select>
-            </div>
-            
-            <div class="pt-2 border-t border-slate-700 flex flex-col space-y-2">
-                <button onclick="confirmDeleteLineUp()" class="w-full bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold py-2.5 rounded-xl transition">
-                    Verwijder geselecteerde line-up
-                </button>
-                <button onclick="closeDeleteLineUpModal()" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-medium py-2 rounded-xl transition">
-                    Annuleren
-                </button>
-            </div>
-        </div>
+    <div class="bench-bar" id="benchBar"></div>
+    <!-- 3 Action buttons tussen wisselbank en onderbalk -->
+    <div class="lineup-actions-bar">
+      <button class="action-chip" onclick="openFormationModal()">Formatie</button>
+      <button class="action-chip" onclick="openAddLineupModal()">+ Line-Up</button>
+      <button class="action-chip" onclick="openEditLineupModal()">- Line-Up</button>
     </div>
+  </div>
 
-    <!-- Script voor functionaliteit -->
-    <script>
-        let secondsElapsed = 0;
-        let timerInterval = null;
-        let isRunning = false;
+  <!-- Tab 2: Spelers -->
+  <div class="tab-view" id="tab-spelers"></div>
 
-        function getLineUps() {
-            let data = localStorage.getItem('spirit_lineups');
-            if (!data) {
-                data = JSON.stringify(["Basis 4-4-2", "Aanvallend 4-3-3", "Compacte Blokkade"]);
-                localStorage.setItem('spirit_lineups', data);
-            }
-            return JSON.parse(data);
-        }
+  <!-- Tab 3: Speeltijd -->
+  <div class="tab-view" id="tab-speeltijd"></div>
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedTeam = localStorage.getItem('spirit_team_name');
-            if (savedTeam) {
-                document.getElementById('team-title').innerText = savedTeam;
-                document.getElementById('team-name-input').value = savedTeam;
-            }
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="switchTab('formatie')" id="nav-formatie">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><circle cx="12" cy="12" r="3"/></svg>
+      <span id="navLineupLabel">Line-Up</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('spelers')" id="nav-spelers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Spelers</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('speeltijd')" id="nav-speeltijd">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg>
+      <span>Speeltijd</span>
+    </button>
+  </div>
+
+  <!-- Tijd Modal -->
+  <div class="modal-backdrop" id="timeModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">Wedstrijd & Tijd</div>
+      <button class="modal-btn green" id="startPauseBtn" onclick="toggleTimer()">▶ Start Wedstrijd</button>
+      <button class="modal-btn amber" onclick="endMatch()">⏹ Einde Wedstrijd</button>
+      <button class="modal-btn" onclick="toggleHomeAway()">⇄ Wissel Thuis / Uit</button>
+      <button class="modal-btn red" onclick="resetMatch()">↻ Reset Wedstrijd</button>
+      <button class="modal-btn" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
+  <!-- Info Modal (Developer) -->
+  <div class="modal-backdrop" id="infoModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">Over deze app</div>
+      <div style="text-align:center; padding: 12px 0 20px;">
+        <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:10px;">Developed by Daniel van Soest</p>
+        <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline;">danielvs69@outlook.com</a>
+      </div>
+      <button class="modal-btn" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
+  <!-- Team & Logo Instellingen Modal -->
+  <div class="modal-backdrop" id="teamModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">Ploeg & Clublogo</div>
+      <label style="font-size:12px;color:#a1a1aa;margin-bottom:4px;display:block;">Teamnaam:</label>
+      <input type="text" id="teamNameInput" class="add-input" style="width:100%;margin-bottom:14px;" placeholder="Bijv. JO16-2">
+      
+      <label style="font-size:12px;color:#a1a1aa;margin-bottom:6px;display:block;">Clublogo (V.V. Spirit):</label>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div id="modalLogoPreview" style="width:52px;height:52px;border-radius:50%;background:#fff;border:2px solid #facc15;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
+        <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
+        <button class="add-btn" style="padding:10px 14px;flex:1;" onclick="document.getElementById('logoFileInput').click()">📷 Kies foto</button>
+        <button class="del-chip" style="background:#dc2626;border:none;color:white;padding:10px 12px;" onclick="removeCustomLogo()">Wis</button>
+      </div>
+
+      <button class="modal-btn green" onclick="saveTeamSettings()">Opslaan</button>
+      <button class="modal-btn red" onclick="resetFullTeam()">🔄 Reset Team (Nieuwe ploeg)</button>
+      <button class="modal-btn" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
+  <!-- Formatie Kiezen Modal -->
+  <div class="modal-backdrop" id="formationModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">Kies Formatie</div>
+      <button class="modal-btn" onclick="applyFormation('4-4-2')">4-4-2</button>
+      <button class="modal-btn" onclick="applyFormation('4-3-3')">4-3-3 (Standaard)</button>
+      <button class="modal-btn" onclick="applyFormation('4-2-3-1')">4-2-3-1</button>
+      <button class="modal-btn" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
+  <!-- Add Line-Up Modal -->
+  <div class="modal-backdrop" id="addLineupModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">+ Line-Up Toevoegen</div>
+      <label style="font-size:12px;color:#a1a1aa;margin-bottom:6px;display:block;">Selecteer minuut voor deze line-up:</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <input type="range" id="lineupMinRange" min="0" max="90" value="15" style="flex:1;" oninput="document.getElementById('lineupMinVal').textContent = this.value + ' min'">
+        <span id="lineupMinVal" style="font-size:18px;font-weight:900;color:#facc15;width:60px;text-align:right;">15 min</span>
+      </div>
+      <p style="font-size:12px;color:#a1a1aa;margin-bottom:16px;">De huidige veldbezetting wordt opgeslagen als nieuwe line-up op dit moment.</p>
+      <button class="modal-btn green" onclick="confirmAddLineup()">Toevoegen aan Line-Ups</button>
+      <button class="modal-btn" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
+  <!-- Edit / Delete Line-Up Modal -->
+  <div class="modal-backdrop" id="editLineupModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">- Line-Up Beheren / Verwijderen</div>
+      <p style="font-size:12px;color:#a1a1aa;margin-bottom:10px;">Selecteer een line-up moment:</p>
+      <div id="lineupSelectList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:200px;overflow-y:auto;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="modal-btn amber" style="flex:1;margin-bottom:0;" onclick="executeEditLineup()">Sla veld op</button>
+        <button class="modal-btn red" style="flex:1;margin-bottom:0;" onclick="executeDeleteLineup()">Verwijder</button>
+      </div>
+      <button class="modal-btn" style="margin-top:10px;" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
+  <!-- Doelpunt Spirit Modal -->
+  <div class="modal-backdrop" id="spiritGoalModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title" id="goalModalTitle">Doelpunt JO16-2</div>
+      <div style="font-size:14px;font-weight:900;margin-bottom:6px;color:#facc15;">Doelpuntenmaker (veld):</div>
+      <div class="picker-grid" id="scorerGrid"></div>
+      <div style="font-size:14px;font-weight:900;margin-bottom:6px;color:#4ade80;">Assist (veld):</div>
+      <div class="picker-grid" id="assistGrid"></div>
+      <button class="modal-btn green" onclick="confirmSpiritGoal()">+1 Doelpunt Opslaan</button>
+      <button class="modal-btn red" onclick="removeSpiritGoal()">-1 Doelpunt Corrigeren</button>
+      <div class="goal-log" id="goalLog"></div>
+      <button class="modal-btn" style="margin-top:10px;" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
+  <!-- Doelpunt Tegenstander Modal -->
+  <div class="modal-backdrop" id="oppGoalModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">Score Tegenstander</div>
+      <button class="modal-btn green" onclick="changeOppScore(1)">+1 Doelpunt Tegenstander</button>
+      <button class="modal-btn red" onclick="changeOppScore(-1)">-1 Doelpunt Corrigeren</button>
+      <button class="modal-btn" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
+<script>
+const DEFAULT_PLAYERS = [
+  "Boaz", "Gijs", "Djim", "Thijmen", "Mees", "Hugo", "Rohan",
+  "Danilo", "Sven", "Thijs", "Vinnie", "Mads", "Mischa", "Omer",
+  "Tycho", "Jesse", "Mohammed"
+];
+
+const POSITIONS_433 = [
+  { x: 50, y: 90, isGk: true },
+  { x: 14, y: 69 },
+  { x: 38, y: 74 },
+  { x: 62, y: 74 },
+  { x: 86, y: 69 },
+  { x: 50, y: 55 },
+  { x: 30, y: 40 },
+  { x: 70, y: 40 },
+  { x: 14, y: 20 },
+  { x: 50, y: 15 },
+  { x: 86, y: 20 }
+];
+
+const POSITIONS_442 = [
+  { x: 50, y: 90, isGk: true },
+  { x: 14, y: 69 },
+  { x: 38, y: 74 },
+  { x: 62, y: 74 },
+  { x: 86, y: 69 },
+  { x: 14, y: 45 },
+  { x: 38, y: 45 },
+  { x: 62, y: 45 },
+  { x: 86, y: 45 },
+  { x: 38, y: 20 },
+  { x: 62, y: 20 }
+];
+
+const POSITIONS_4231 = [
+  { x: 50, y: 90, isGk: true },
+  { x: 14, y: 69 },
+  { x: 38, y: 74 },
+  { x: 62, y: 74 },
+  { x: 86, y: 69 },
+  { x: 38, y: 55 },
+  { x: 62, y: 55 },
+  { x: 14, y: 35 },
+  { x: 50, y: 35 },
+  { x: 86, y: 35 },
+  { x: 50, y: 16 }
+];
+
+let POSITIONS = POSITIONS_433;
+
+let LINEUPS = {
+  0:  ["Boaz", "Hugo", "Gijs", "Djim", "Mees", "Jesse", "Danilo", "Sven", "Mads", "Tycho", "Mohammed"],
+  16: ["Boaz", "Hugo", "Gijs", "Djim", "Mees", "Omer", "Thijs", "Vinnie", "Mischa", "Tycho", "Mohammed"],
+  27: ["Boaz", "Rohan", "Thijmen", "Gijs", "Mees", "Omer", "Thijs", "Vinnie", "Mischa", "Tycho", "Mohammed"],
+  32: ["Boaz", "Rohan", "Thijmen", "Gijs", "Mees", "Mischa", "Danilo", "Thijs", "Mads", "Vinnie", "Jesse"],
+  48: ["Boaz", "Rohan", "Thijmen", "Gijs", "Mees", "Omer", "Danilo", "Sven", "Mohammed", "Tycho", "Jesse"],
+  53: ["Boaz", "Hugo", "Thijmen", "Djim", "Rohan", "Omer", "Danilo", "Sven", "Mohammed", "Tycho", "Jesse"],
+  64: ["Boaz", "Hugo", "Thijmen", "Djim", "Rohan", "Mischa", "Thijs", "Sven", "Mads", "Vinnie", "Omer"]
+};
+
+let state = {
+  players: [...DEFAULT_PLAYERS],
+  absent: [],
+  minutes: {},
+  activeField: [...LINEUPS[0]],
+  activeBlock: 0,
+  previewBlock: null,
+  selectedPlayer: null,
+  spiritScore: 0,
+  oppScore: 0,
+  isHome: true,
+  status: "Klaar",
+  elapsedSec: 0,
+  lastTick: null,
+  goals: [],
+  teamName: "JO16-2",
+  customLogo: "IMG_0119.jpeg"
+};
+
+function initMinutes() {
+  state.players.forEach(p => { if (typeof state.minutes[p] !== "number") state.minutes[p] = 0; });
+}
+
+function saveState() {
+  try { localStorage.setItem("spirit_jo16_2_state_v2", JSON.stringify({ state, LINEUPS })); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem("spirit_jo16_2_state_v2") || localStorage.getItem("spirit_jo16_2_state_v1");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.state) {
+        state = { ...state, ...parsed.state };
+        if (parsed.LINEUPS) LINEUPS = parsed.LINEUPS;
+      } else {
+        state = { ...state, ...parsed };
+      }
+      if (!state.teamName) state.teamName = "JO16-2";
+      if (!state.customLogo) state.customLogo = "IMG_0119.jpeg";
+    }
+  } catch(e) {}
+  initMinutes();
+}
+
+function formatTimeMMSS(totalSec) {
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function getLogoHTML() {
+  if (state.customLogo) {
+    return `<img src="${state.customLogo}" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2746%27 fill=%27%23facc15%27/%3E%3C/svg%3E';" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  }
+  return `<svg viewBox="0 0 100 100" width="46" height="46">
+    <circle cx="50" cy="50" r="46" fill="#facc15" stroke="#111111" stroke-width="4"/>
+    <path d="M50 4 A46 46 0 0 1 50 96 Z" fill="#ffffff"/>
+    <circle cx="50" cy="50" r="46" fill="none" stroke="#111111" stroke-width="4"/>
+    <rect x="12" y="34" width="76" height="32" rx="6" fill="#111111"/>
+    <text x="50" y="55" font-size="17" font-weight="900" text-anchor="middle" fill="#facc15" letter-spacing="1">SPIRIT</text>
+  </svg>`;
+}
+
+function renderHeader() {
+  const timeFormatted = formatTimeMMSS(state.elapsedSec);
+  const statusClass = state.status === "Lopend" ? "running" : (state.status === "Einde" ? "ended" : "");
+  const teamLabel = state.teamName || "JO16-2";
+  
+  const spiritCol = `
+    <div class="team-col" onclick="openTeamModal()">
+      <div class="spirit-badge">${getLogoHTML()}</div>
+      <div class="team-label">${teamLabel}</div>
+    </div>`;
+  const oppCol = `
+    <div class="team-col" onclick="openInfoModal()">
+      <div class="opp-badge">i</div>
+      <div class="team-label">&nbsp;</div>
+    </div>`;
+
+  const leftCol = state.isHome ? spiritCol : oppCol;
+  const rightCol = state.isHome ? oppCol : spiritCol;
+  const leftScore = state.isHome ? state.spiritScore : state.oppScore;
+  const rightScore = state.isHome ? state.oppScore : state.spiritScore;
+  const leftClick = state.isHome ? "openSpiritGoalModal()" : "openOppGoalModal()";
+  const rightClick = state.isHome ? "openOppGoalModal()" : "openSpiritGoalModal()";
+
+  document.getElementById("headerCard").innerHTML = `
+    ${leftCol}
+    <div class="score-pill">
+      <div class="score-circle" onclick="${leftClick}">${leftScore}</div>
+      <div class="time-center" onclick="openTimeModal()">
+        <div class="time-display">${timeFormatted}</div>
+        <div class="status-pill ${statusClass}">${state.status}</div>
+      </div>
+      <div class="score-circle" onclick="${rightClick}">${rightScore}</div>
+    </div>
+    ${rightCol}
+  `;
+  document.getElementById("goalModalTitle").textContent = `Doelpunt ${teamLabel}`;
+  document.getElementById("app-meta-title").textContent = `V.V. Spirit ${teamLabel} Coach`;
+}
+
+function renderBlocks() {
+  const bar = document.getElementById("blocksBar");
+  const keys = Object.keys(LINEUPS).map(Number).sort((a,b) => a - b);
+  bar.innerHTML = keys.map(min => {
+    let cls = "block-btn";
+    if (state.previewBlock === min) cls += " preview";
+    else if (state.activeBlock === min && state.previewBlock === null) cls += " active";
+    return `<button class="${cls}" onclick="handleBlockClick(${min})">${min}</button>`;
+  }).join("");
+}
+
+function handleBlockClick(min) {
+  state.selectedPlayer = null;
+  if (state.previewBlock === min) {
+    const lineup = (LINEUPS[min] || []).filter(p => !state.absent.includes(p));
+    const available = state.players.filter(p => !state.absent.includes(p));
+    while (lineup.length < 11 && lineup.length < available.length) {
+      const next = available.find(p => !lineup.includes(p));
+      if (next) lineup.push(next); else break;
+    }
+    state.activeField = lineup;
+    state.activeBlock = min;
+    state.previewBlock = null;
+  } else {
+    state.previewBlock = min;
+  }
+  saveState();
+  renderAll();
+}
+
+function getDisplayedField() {
+  if (state.previewBlock !== null) {
+    const lineup = (LINEUPS[state.previewBlock] || []).filter(p => !state.absent.includes(p));
+    const available = state.players.filter(p => !state.absent.includes(p));
+    while (lineup.length < 11 && lineup.length < available.length) {
+      const next = available.find(p => !lineup.includes(p));
+      if (next) lineup.push(next); else break;
+    }
+    return lineup;
+  }
+  return state.activeField;
+}
+
+function renderPitchAndBench() {
+  const fieldPlayers = getDisplayedField();
+  const pitchEl = document.getElementById("pitchPlayers");
+
+  pitchEl.innerHTML = fieldPlayers.map((name, idx) => {
+    const pos = POSITIONS[idx] || { x: 50, y: 50 };
+    const isGk = idx === 0;
+    const isSel = state.selectedPlayer === name;
+    const min = state.minutes[name] || 0;
+    const initial = name ? name.charAt(0).toUpperCase() : "";
+    return `
+      <div class="player-node" style="left:${pos.x}%;top:${pos.y}%;" onclick="handlePlayerTap('${(name || "").replace(/'/g, "\'")}')">
+        <div class="ball ${isGk ? 'gk' : 'field'} ${isSel ? 'selected' : ''}">
+          ${initial}
+          <div class="min-badge">${min}</div>
+        </div>
+        <div class="player-name">${name}</div>
+      </div>`;
+  }).join("");
+
+  const benchPlayers = state.players
+    .filter(p => !state.absent.includes(p) && !fieldPlayers.includes(p))
+    .sort((a, b) => (state.minutes[a] || 0) - (state.minutes[b] || 0));
+
+  const benchEl = document.getElementById("benchBar");
+  benchEl.innerHTML = benchPlayers.map(name => {
+    const isSel = state.selectedPlayer === name;
+    const min = state.minutes[name] || 0;
+    const initial = name ? name.charAt(0).toUpperCase() : "";
+    return `
+      <div class="bench-slot" onclick="handlePlayerTap('${(name || "").replace(/'/g, "\'")}')">
+        <div class="ball bench ${isSel ? 'selected' : ''}">
+          ${initial}
+          <div class="min-badge">${min}</div>
+        </div>
+        <div class="player-name">${name}</div>
+      </div>`;
+  }).join("");
+}
+
+function handlePlayerTap(name) {
+  if (state.previewBlock !== null) {
+    state.previewBlock = null;
+  }
+  if (!state.selectedPlayer) {
+    state.selectedPlayer = name;
+  } else if (state.selectedPlayer === name) {
+    state.selectedPlayer = null;
+  } else {
+    const p1 = state.selectedPlayer;
+    const p2 = name;
+    const idx1 = state.activeField.indexOf(p1);
+    const idx2 = state.activeField.indexOf(p2);
+    if (idx1 !== -1 && idx2 !== -1) {
+      state.activeField[idx1] = p2;
+      state.activeField[idx2] = p1;
+    } else if (idx1 !== -1 && idx2 === -1) {
+      state.activeField[idx1] = p2;
+    } else if (idx1 === -1 && idx2 !== -1) {
+      state.activeField[idx2] = p1;
+    }
+    state.selectedPlayer = null;
+  }
+  saveState();
+  renderAll();
+}
+
+function renderSpelersTab() {
+  const present = state.players.filter(p => !state.absent.includes(p));
+  const absent = state.players.filter(p => state.absent.includes(p));
+
+  const presentHtml = present.map(name => `
+    <div class="list-row">
+      <div class="row-left">
+        <div class="dot-green"></div>
+        <div class="row-name">${name}</div>
+      </div>
+      <button class="circle-action btn-red" onclick="setAbsent('${name.replace(/'/g, "\'")}', true)">−</button>
+    </div>`).join("");
+
+  const absentHtml = absent.map(name => `
+    <div class="list-row">
+      <div class="row-left">
+        <div class="row-name" style="color:#a1a1aa;">${name}</div>
+      </div>
+      <button class="circle-action btn-green" onclick="setAbsent('${name.replace(/'/g, "\'")}', false)">+</button>
+    </div>`).join("");
+
+  const chipsHtml = state.players.map(name => `
+    <button class="del-chip" onclick="deletePlayer('${name.replace(/'/g, "\'")}')">✕ ${name}</button>
+  `).join("");
+
+  document.getElementById("tab-spelers").innerHTML = `
+    <div class="section-title">Aanwezig (${present.length})</div>
+    ${presentHtml}
+    <div class="section-title">Afwezig (${absent.length})</div>
+    ${absentHtml || '<div style="color:#71717a;font-weight:800;font-size:15px;margin-bottom:10px;">Niemand afwezig</div>'}
+    <div class="team-manage">
+      <div class="section-title" style="margin-top:0;">Team aanpassen</div>
+      <div class="add-form">
+        <input type="text" id="newPlayerInput" class="add-input" placeholder="Nieuwe speler naam...">
+        <button class="add-btn" onclick="addPlayer()">Toevoegen</button>
+      </div>
+      <div class="del-chip-wrap">${chipsHtml}</div>
+    </div>
+  `;
+}
+
+function setAbsent(name, makeAbsent) {
+  if (makeAbsent) {
+    if (!state.absent.includes(name)) state.absent.push(name);
+    const fIdx = state.activeField.indexOf(name);
+    if (fIdx !== -1) {
+      const replacement = state.players.find(p => !state.absent.includes(p) && !state.activeField.includes(p));
+      if (replacement) state.activeField[fIdx] = replacement;
+      else state.activeField.splice(fIdx, 1);
+    }
+  } else {
+    state.absent = state.absent.filter(p => p !== name);
+  }
+  saveState();
+  renderAll();
+}
+
+function addPlayer() {
+  const inp = document.getElementById("newPlayerInput");
+  const val = (inp.value || "").trim();
+  if (!val || state.players.includes(val)) return;
+  state.players.push(val);
+  state.minutes[val] = 0;
+  saveState();
+  renderAll();
+}
+
+function deletePlayer(name) {
+  state.players = state.players.filter(p => p !== name);
+  state.absent = state.absent.filter(p => p !== name);
+  state.activeField = state.activeField.filter(p => p !== name);
+  delete state.minutes[name];
+  saveState();
+  renderAll();
+}
+
+function renderSpeeltijdTab() {
+  const sorted = [...state.players].sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
+  document.getElementById("tab-speeltijd").innerHTML = sorted.map(name => `
+    <div class="list-row">
+      <div class="row-name">${name}</div>
+      <div class="row-min">${state.minutes[name] || 0} min</div>
+    </div>
+  `).join("");
+}
+
+function switchTab(tab) {
+  document.getElementById("tab-formatie").style.display = tab === "formatie" ? "block" : "none";
+  document.getElementById("tab-spelers").classList.toggle("active", tab === "spelers");
+  document.getElementById("tab-speeltijd").classList.toggle("active", tab === "speeltijd");
+  ["formatie", "spelers", "speeltijd"].forEach(t => {
+    document.getElementById("nav-" + t).classList.toggle("active", t === tab);
+  });
+  renderAll();
+}
+
+setInterval(() => {
+  if (state.status === "Lopend" && state.lastTick) {
+    const now = Date.now();
+    const diffSec = Math.floor((now - state.lastTick) / 1000);
+    if (diffSec >= 1) {
+      const oldMin = Math.floor(state.elapsedSec / 60);
+      state.elapsedSec += diffSec;
+      state.lastTick += diffSec * 1000;
+      const newMin = Math.floor(state.elapsedSec / 60);
+      const addedMins = newMin - oldMin;
+      if (addedMins > 0) {
+        state.activeField.forEach(p => {
+          if (p) state.minutes[p] = (state.minutes[p] || 0) + addedMins;
         });
+        renderPitchAndBench();
+        renderSpeeltijdTab();
+      }
+      saveState();
+      renderHeader();
+    }
+  }
+}, 1000);
 
-        function toggleTimer() {
-            if (!isRunning) {
-                isRunning = true;
-                document.getElementById('timer-start-btn').innerText = 'Hervat';
-                document.getElementById('timer-start-btn').classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
-                document.getElementById('timer-start-btn').classList.add('bg-blue-600', 'hover:bg-blue-500');
-                
-                timerInterval = setInterval(() => {
-                    secondsElapsed++;
-                    updateTimerDisplay();
-                }, 1000);
-            }
-        }
+function openTimeModal() {
+  document.getElementById("startPauseBtn").textContent = state.status === "Lopend" ? "⏸ Pauze" : "▶ Start Wedstrijd";
+  document.getElementById("timeModal").classList.add("open");
+}
 
-        function pauseTimer() {
-            if (isRunning) {
-                isRunning = false;
-                clearInterval(timerInterval);
-                document.getElementById('timer-start-btn').innerText = 'Start';
-                document.getElementById('timer-start-btn').classList.remove('bg-blue-600', 'hover:bg-blue-500');
-                document.getElementById('timer-start-btn').classList.add('bg-emerald-600', 'hover:bg-emerald-500');
-            }
-        }
+function openInfoModal() {
+  document.getElementById("infoModal").classList.add("open");
+}
 
-        function endMatch() {
-            if (confirm('Wil je de wedstrijd beëindigen en de timer resetten?')) {
-                pauseTimer();
-                secondsElapsed = 0;
-                updateTimerDisplay();
-                alert('Wedstrijd beëindigd.');
-            }
-        }
+function openTeamModal() {
+  document.getElementById("teamNameInput").value = state.teamName || "JO16-2";
+  document.getElementById("modalLogoPreview").innerHTML = getLogoHTML();
+  document.getElementById("teamModal").classList.add("open");
+}
 
-        function updateTimerDisplay() {
-            const mins = Math.floor(secondsElapsed / 60);
-            const secs = secondsElapsed % 60;
-            document.getElementById('match-timer-display').innerText = 
-                String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
-        }
+function saveTeamSettings() {
+  const nameInp = document.getElementById("teamNameInput").value.trim();
+  if (nameInp) state.teamName = nameInp;
+  saveState();
+  closeModals();
+  renderAll();
+}
 
-        function openTeamSettings() {
-            document.getElementById('settings-modal').classList.remove('hidden');
-            document.getElementById('settings-modal').classList.add('flex');
-        }
+function resetFullTeam() {
+  if (confirm("Weet je zeker dat je het volledige team en alle opgeslagen line-ups wilt wissen om een nieuw team te starten?")) {
+    localStorage.removeItem("spirit_jo16_2_state_v2");
+    localStorage.removeItem("spirit_jo16_2_state_v1");
+    location.reload();
+  }
+}
 
-        function closeTeamSettings() {
-            document.getElementById('settings-modal').classList.add('hidden');
-            document.getElementById('settings-modal').classList.remove('flex');
-        }
+function openFormationModal() {
+  document.getElementById("formationModal").classList.add("open");
+}
 
-        function saveTeamName() {
-            const newName = document.getElementById('team-name-input').value;
-            if (newName.trim() !== '') {
-                localStorage.setItem('spirit_team_name', newName);
-                document.getElementById('team-title').innerText = newName;
-            }
-            closeTeamSettings();
-        }
+function applyFormation(type) {
+  if (type === '4-4-2') POSITIONS = POSITIONS_442;
+  else if (type === '4-3-3') POSITIONS = POSITIONS_433;
+  else if (type === '4-2-3-1') POSITIONS = POSITIONS_4231;
+  closeModals();
+  renderAll();
+}
 
-        function resetApp() {
-            if (confirm('Weet je zeker dat je alle data, opstellingen en het team wilt wissen om met een schone lei te beginnen?')) {
-                localStorage.clear();
-                localStorage.setItem('spirit_team_name', 'Nieuw Team');
-                alert('De app is gereset.');
-                location.reload();
-            }
-        }
+function openAddLineupModal() {
+  document.getElementById("addLineupModal").classList.add("open");
+}
 
-        function addLineUp() {
-            const name = prompt("Voer de naam van de nieuwe line-up in (bijv. '2e helft - Standaard'):");
-            if (name && name.trim() !== '') {
-                let lineups = getLineUps();
-                lineups.push(name.trim());
-                localStorage.setItem('spirit_lineups', JSON.stringify(lineups));
-                alert(`Line-up '${name}' is toegevoegd!`);
-            }
-        }
+function confirmAddLineup() {
+  const min = parseInt(document.getElementById("lineupMinRange").value, 10);
+  LINEUPS[min] = [...state.activeField];
+  state.activeBlock = min;
+  state.previewBlock = null;
+  saveState();
+  closeModals();
+  renderAll();
+}
 
-        function openDeleteLineUpModal() {
-            let lineups = getLineUps();
-            const select = document.getElementById('lineup-select-delete');
-            select.innerHTML = '';
-            
-            if (lineups.length === 0) {
-                select.innerHTML = '<option value="">Geen line-ups beschikbaar</option>';
-            } else {
-                lineups.forEach(l => {
-                    let opt = document.createElement('option');
-                    opt.value = l;
-                    opt.textContent = l;
-                    select.appendChild(opt);
-                });
-            }
+let selectedEditMin = null;
+function openEditLineupModal() {
+  const keys = Object.keys(LINEUPS).map(Number).sort((a,b) => a - b);
+  const listEl = document.getElementById("lineupSelectList");
+  listEl.innerHTML = keys.map(min => `
+    <button class="modal-btn" id="edit-btn-${min}" style="margin-bottom:0;text-align:left;display:flex;justify-content:space-between;border:2px solid ${selectedEditMin === min ? '#facc15' : 'transparent'};" onclick="selectLineupToEdit(${min})">
+      <span>Minuut ${min}</span>
+      <span style="font-size:12px;color:#facc15;">Selecteer</span>
+    </button>
+  `).join("");
 
-            document.getElementById('delete-lineup-modal').classList.remove('hidden');
-            document.getElementById('delete-lineup-modal').classList.add('flex');
-        }
+  document.getElementById("editLineupModal").classList.add("open");
+}
 
-        function closeDeleteLineUpModal() {
-            document.getElementById('delete-lineup-modal').classList.add('hidden');
-            document.getElementById('delete-lineup-modal').classList.remove('flex');
-        }
+function selectLineupToEdit(min) {
+  selectedEditMin = min;
+  state.activeField = [...(LINEUPS[min] || [])];
+  state.activeBlock = min;
+  state.previewBlock = null;
+  saveState();
+  openEditLineupModal();
+  renderAll();
+}
 
-        function confirmDeleteLineUp() {
-            const select = document.getElementById('lineup-select-delete');
-            const selectedVal = select.value;
-            
-            if (!selectedVal) {
-                alert('Selecteer eerst een line-up.');
-                return;
-            }
+function executeEditLineup() {
+  if (selectedEditMin !== null) {
+    LINEUPS[selectedEditMin] = [...state.activeField];
+    saveState();
+  }
+  closeModals();
+  renderAll();
+}
 
-            if (confirm(`Weet je zeker dat je line-up '${selectedVal}' wilt verwijderen?`)) {
-                let lineups = getLineUps();
-                lineups = lineups.filter(l => l !== selectedVal);
-                localStorage.setItem('spirit_lineups', JSON.stringify(lineups));
-                alert(`Line-up '${selectedVal}' is verwijderd.`);
-                closeDeleteLineUpModal();
-            }
-        }
-    </script>
+function executeDeleteLineup() {
+  if (selectedEditMin !== null && Object.keys(LINEUPS).length > 1) {
+    delete LINEUPS[selectedEditMin];
+    const remaining = Object.keys(LINEUPS).map(Number).sort((a,b) => a - b);
+    state.activeBlock = remaining[0];
+    state.activeField = [...LINEUPS[state.activeBlock]];
+    selectedEditMin = null;
+    saveState();
+  }
+  closeModals();
+  renderAll();
+}
+
+function toggleTimer() {
+  if (state.status === "Lopend") {
+    state.status = "Pauze";
+    state.lastTick = null;
+  } else {
+    state.status = "Lopend";
+    state.lastTick = Date.now();
+  }
+  saveState();
+  closeModals();
+  renderAll();
+}
+
+function endMatch() {
+  state.status = "Einde";
+  state.lastTick = null;
+  saveState();
+  closeModals();
+  renderAll();
+}
+
+function toggleHomeAway() {
+  state.isHome = !state.isHome;
+  saveState();
+  closeModals();
+  renderHeader();
+}
+
+function resetMatch() {
+  state.status = "Klaar";
+  state.elapsedSec = 0;
+  state.lastTick = null;
+  state.spiritScore = 0;
+  state.oppScore = 0;
+  state.goals = [];
+  state.previewBlock = null;
+  state.selectedPlayer = null;
+  state.players.forEach(p => { state.minutes[p] = 0; });
+  const firstKey = Object.keys(LINEUPS).map(Number).sort((a,b) => a - b)[0] || 0;
+  state.activeBlock = firstKey;
+  const lineup = (LINEUPS[firstKey] || []).filter(p => !state.absent.includes(p));
+  const available = state.players.filter(p => !state.absent.includes(p));
+  while (lineup.length < 11 && lineup.length < available.length) {
+    const next = available.find(p => !lineup.includes(p));
+    if (next) lineup.push(next); else break;
+  }
+  state.activeField = lineup;
+  saveState();
+  closeModals();
+  renderAll();
+}
+
+let tempScorer = null;
+let tempAssist = "Geen";
+
+function openSpiritGoalModal() {
+  tempScorer = null;
+  tempAssist = "Geen";
+  renderGoalPickers();
+  document.getElementById("spiritGoalModal").classList.add("open");
+}
+
+function renderGoalPickers() {
+  const onField = state.activeField;
+  document.getElementById("scorerGrid").innerHTML = onField.map(p => `
+    <button class="pick-btn ${tempScorer === p ? 'chosen' : ''}" onclick="selectScorer('${p.replace(/'/g, "\'")}')">${p}</button>
+  `).join("");
+
+  const assistOpts = ["Geen", ...onField.filter(p => p !== tempScorer)];
+  document.getElementById("assistGrid").innerHTML = assistOpts.map(p => `
+    <button class="pick-btn ${tempAssist === p ? 'chosen' : ''}" onclick="selectAssist('${p.replace(/'/g, "\'")}')">${p}</button>
+  `).join("");
+
+  document.getElementById("goalLog").innerHTML = state.goals.length
+    ? state.goals.map(g => `${g.min}' ⚽ ${g.scorer}${g.assist && g.assist !== 'Geen' ? ' (assist: ' + g.assist + ')' : ''}`).join("<br>")
+    : "Nog geen doelpunten geregistreerd";
+}
+
+function selectScorer(p) { tempScorer = p; if (tempAssist === p) tempAssist = "Geen"; renderGoalPickers(); }
+function selectAssist(p) { tempAssist = p; renderGoalPickers(); }
+
+function confirmSpiritGoal() {
+  state.spiritScore += 1;
+  const min = Math.floor(state.elapsedSec / 60);
+  state.goals.push({ min, scorer: tempScorer || state.teamName, assist: tempAssist });
+  saveState();
+  closeModals();
+  renderHeader();
+}
+
+function removeSpiritGoal() {
+  if (state.spiritScore > 0) {
+    state.spiritScore -= 1;
+    state.goals.pop();
+    saveState();
+  }
+  closeModals();
+  renderHeader();
+}
+
+function openOppGoalModal() {
+  document.getElementById("oppGoalModal").classList.add("open");
+}
+
+function changeOppScore(delta) {
+  state.oppScore = Math.max(0, state.oppScore + delta);
+  saveState();
+  closeModals();
+  renderHeader();
+}
+
+function closeModals(e) {
+  if (!e || e.target.classList.contains("modal-backdrop")) {
+    document.querySelectorAll(".modal-backdrop").forEach(m => m.classList.remove("open"));
+  }
+}
+
+function renderAll() {
+  renderHeader();
+  renderBlocks();
+  renderPitchAndBench();
+  renderSpelersTab();
+  renderSpeeltijdTab();
+  document.getElementById("navLineupLabel").textContent = "Line-Up";
+}
+
+function handleLogoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 180;
+      canvas.height = 180;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 180, 180);
+      const scale = Math.min(180 / img.width, 180 / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      ctx.drawImage(img, (180 - w) / 2, (180 - h) / 2, w, h);
+      state.customLogo = canvas.toDataURL('image/png');
+      saveState();
+      applyAppIcon();
+      document.getElementById("modalLogoPreview").innerHTML = getLogoHTML();
+      renderAll();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeCustomLogo() {
+  state.customLogo = null;
+  saveState();
+  applyAppIcon();
+  document.getElementById("modalLogoPreview").innerHTML = getLogoHTML();
+  renderAll();
+}
+
+function applyAppIcon() {
+  const link = document.getElementById('app-icon-link');
+  if (!link) return;
+  if (state.customLogo) {
+    link.href = state.customLogo;
+  } else {
+    link.href = "IMG_0119.jpeg";
+  }
+}
+
+loadState();
+applyAppIcon();
+renderAll();
+</script>
 </body>
 </html>
