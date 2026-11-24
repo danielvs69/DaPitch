@@ -228,11 +228,10 @@
   <!-- Edit / Delete Line-Up Modal -->
   <div class="modal-backdrop" id="editLineupModal" onclick="closeModals(event)">
     <div class="modal-box" onclick="event.stopPropagation()">
-      <div class="modal-title">Beheer Line-Up</div>
-      <label style="font-size:12px;color:#a1a1aa;margin-bottom:6px;display:block;">Kies line-up moment:</label>
-      <select id="lineupSelectDropdown" class="add-input" style="width:100%;margin-bottom:16px;padding:12px;background:#27272a;color:#ffffff;border:2px solid #3f3f46;border-radius:10px;font-weight:900;font-size:16px;"></select>
-      <button class="modal-btn amber" onclick="loadSelectedLineupForEdit()">Laad op Veld</button>
-      <button class="modal-btn red" onclick="executeDeleteLineupSelected()">Verwijder deze Line-Up</button>
+      <div class="modal-title">Line-Up Verwijderen</div>
+      <p style="font-size:12px;color:#a1a1aa;margin-bottom:10px;">Selecteer het line-up moment dat je wilt wissen:</p>
+      <div id="lineupSelectList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:220px;overflow-y:auto;"></div>
+      <button class="modal-btn red" onclick="executeDeleteLineupSelected()">Verwijder Geselecteerde Line-Up</button>
       <button class="modal-btn" onclick="closeModals()">Sluiten</button>
     </div>
   </div>
@@ -723,41 +722,39 @@ function confirmAddLineup() {
 let selectedEditMin = null;
 function openEditLineupModal() {
   const keys = Object.keys(LINEUPS).map(Number).sort((a,b) => a - b);
-  const selectEl = document.getElementById("lineupSelectDropdown");
-  selectEl.innerHTML = keys.map(min => `<option value="${min}">Minuut ${min} (${(LINEUPS[min] || []).length} spelers)</option>`).join("");
-  if (keys.length > 0) {
-    selectEl.value = keys[0];
+  if (keys.length > 0 && selectedEditMin === null) {
+    selectedEditMin = keys[0];
   }
+  const listEl = document.getElementById("lineupSelectList");
+  listEl.innerHTML = keys.map(min => `
+    <button class="pick-btn ${selectedEditMin === min ? 'chosen' : ''}" style="width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;" onclick="selectLineupToDelete(${min})">
+      <span>Minuut ${min}</span>
+      <span style="font-size:12px;color:${selectedEditMin === min ? '#facc15' : '#a1a1aa'};">${(LINEUPS[min] || []).length} spelers</span>
+    </button>
+  `).join("");
   document.getElementById("editLineupModal").classList.add("open");
 }
 
-function loadSelectedLineupForEdit() {
-  const selectEl = document.getElementById("lineupSelectDropdown");
-  const min = parseInt(selectEl.value, 10);
-  if (!isNaN(min) && LINEUPS[min]) {
-    state.activeField = [...LINEUPS[min]];
-    state.activeBlock = min;
-    state.previewBlock = null;
-    saveState();
-  }
-  closeModals();
-  renderAll();
+function selectLineupToDelete(min) {
+  selectedEditMin = min;
+  openEditLineupModal();
 }
 
 function executeDeleteLineupSelected() {
-  const selectEl = document.getElementById("lineupSelectDropdown");
-  const min = parseInt(selectEl.value, 10);
-  if (!isNaN(min) && Object.keys(LINEUPS).length > 1) {
-    delete LINEUPS[min];
-    const remaining = Object.keys(LINEUPS).map(Number).sort((a,b) => a - b);
-    state.activeBlock = remaining[0];
-    state.activeField = [...LINEUPS[state.activeBlock]];
-    saveState();
+  if (selectedEditMin !== null && Object.keys(LINEUPS).length > 1) {
+    if (confirm(`Weet je zeker dat je de line-up van minuut ${selectedEditMin} wilt verwijderen?`)) {
+      delete LINEUPS[selectedEditMin];
+      const remaining = Object.keys(LINEUPS).map(Number).sort((a,b) => a - b);
+      selectedEditMin = remaining[0];
+      state.activeBlock = remaining[0];
+      state.activeField = [...LINEUPS[state.activeBlock]];
+      saveState();
+      closeModals();
+      renderAll();
+    }
   } else {
     alert("Je moet minimaal 1 line-up overhouden.");
   }
-  closeModals();
-  renderAll();
 }
 
 function toggleTimer() {
