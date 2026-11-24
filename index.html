@@ -230,6 +230,16 @@
     </div>
   </div>
 
+  <!-- Speeltijdoverzicht Modal -->
+  <div class="modal-backdrop" id="speeltijdModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">Speeltijdoverzicht</div>
+      <div id="speeltijdModalContent"></div>
+      <button class="modal-btn green" onclick="shareSpeeltijdSummary()">↗ Delen</button>
+      <button class="modal-btn" onclick="closeModals()">Sluiten</button>
+    </div>
+  </div>
+
   <!-- Info Modal (Developer) -->
   <div class="modal-backdrop" id="infoModal" onclick="closeModals(event)">
     <div class="modal-box" onclick="event.stopPropagation()">
@@ -237,7 +247,7 @@
       <div style="text-align:center; padding: 12px 0 20px;">
         <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:10px;">Developed by Daniel van Soest</p>
         <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:14px;">danielvs69@outlook.com</a>
-        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Versie 1.5</p>
+        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Versie 1.6</p>
       </div>
       <button class="modal-btn" onclick="closeModals()">Sluiten</button>
     </div>
@@ -1317,7 +1327,7 @@ async function shareSpeeltijdSummary() {
   }
 }
 
-const CURRENT_APP_VERSION = "1.5";
+const CURRENT_APP_VERSION = "1.6";
 
 async function checkForUpdates() {
   try {
