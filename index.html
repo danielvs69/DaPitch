@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title id="app-meta-title">V.V. Spirit JO16-2 Coach</title>
+<title id="app-meta-title">V.V. Spirit Coach</title>
 <link rel="apple-touch-icon" id="app-icon-link" href="IMG_0119.jpeg">
 <link rel="icon" type="image/jpeg" href="IMG_0119.jpeg">
 <style>
@@ -104,6 +104,11 @@
   .pick-btn { padding: 12px 8px; border-radius: 10px; border: 2px solid #3f3f46; background: #27272a; color: #ffffff; font-size: 15px; font-weight: 900; cursor: pointer; }
   .pick-btn.chosen { border-color: #facc15; background: #422006; color: #facc15; }
   .goal-log { margin-top: 10px; border-top: 1px solid #2c2c2e; padding-top: 8px; font-size: 13px; font-weight: 800; color: #d4d4d8; }
+  
+  /* Formatie Categorie Tabs in Modal */
+  .form-cat-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; }
+  .form-cat-btn { padding: 10px 4px; border-radius: 8px; border: 2px solid #3f3f46; background: #27272a; color: #a1a1aa; font-size: 14px; font-weight: 900; cursor: pointer; text-align: center; }
+  .form-cat-btn.active { border-color: #16a34a; background: #052e16; color: #ffffff; }
 </style>
 </head>
 <body>
@@ -202,10 +207,13 @@
   <!-- Formatie Kiezen Modal -->
   <div class="modal-backdrop" id="formationModal" onclick="closeModals(event)">
     <div class="modal-box" onclick="event.stopPropagation()">
-      <div class="modal-title">Kies Formatie</div>
-      <button class="modal-btn" onclick="applyFormation('4-4-2')">4-4-2</button>
-      <button class="modal-btn" onclick="applyFormation('4-3-3')">4-3-3 (Standaard)</button>
-      <button class="modal-btn" onclick="applyFormation('4-2-3-1')">4-2-3-1</button>
+      <div class="modal-title">Kies Vorm & Formatie</div>
+      <div class="form-cat-tabs">
+        <button class="form-cat-btn" id="catBtn-6v6" onclick="setFormationCategory('6v6')">6 tegen 6</button>
+        <button class="form-cat-btn" id="catBtn-8v8" onclick="setFormationCategory('8v8')">8 tegen 8</button>
+        <button class="form-cat-btn active" id="catBtn-11v11" onclick="setFormationCategory('11v11')">11 tegen 11</button>
+      </div>
+      <div id="formationListContainer" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
       <button class="modal-btn" onclick="closeModals()">Sluiten</button>
     </div>
   </div>
@@ -268,49 +276,71 @@ const DEFAULT_PLAYERS = [
   "Tycho", "Jesse", "Mohammed"
 ];
 
-const POSITIONS_433 = [
+const POSITIONS_11_433 = [
   { x: 50, y: 90, isGk: true },
-  { x: 14, y: 69 },
-  { x: 38, y: 74 },
-  { x: 62, y: 74 },
-  { x: 86, y: 69 },
-  { x: 50, y: 55 },
-  { x: 30, y: 40 },
-  { x: 70, y: 40 },
-  { x: 14, y: 20 },
-  { x: 50, y: 15 },
-  { x: 86, y: 20 }
+  { x: 14, y: 69 }, { x: 38, y: 74 }, { x: 62, y: 74 }, { x: 86, y: 69 },
+  { x: 50, y: 55 }, { x: 30, y: 40 }, { x: 70, y: 40 },
+  { x: 14, y: 20 }, { x: 50, y: 15 }, { x: 86, y: 20 }
 ];
 
-const POSITIONS_442 = [
+const POSITIONS_11_442 = [
   { x: 50, y: 90, isGk: true },
-  { x: 14, y: 69 },
-  { x: 38, y: 74 },
-  { x: 62, y: 74 },
-  { x: 86, y: 69 },
-  { x: 14, y: 45 },
-  { x: 38, y: 45 },
-  { x: 62, y: 45 },
-  { x: 86, y: 45 },
-  { x: 38, y: 20 },
-  { x: 62, y: 20 }
+  { x: 14, y: 69 }, { x: 38, y: 74 }, { x: 62, y: 74 }, { x: 86, y: 69 },
+  { x: 14, y: 45 }, { x: 38, y: 45 }, { x: 62, y: 45 }, { x: 86, y: 45 },
+  { x: 38, y: 20 }, { x: 62, y: 20 }
 ];
 
-const POSITIONS_4231 = [
+const POSITIONS_11_4231 = [
   { x: 50, y: 90, isGk: true },
-  { x: 14, y: 69 },
-  { x: 38, y: 74 },
-  { x: 62, y: 74 },
-  { x: 86, y: 69 },
-  { x: 38, y: 55 },
-  { x: 62, y: 55 },
-  { x: 14, y: 35 },
-  { x: 50, y: 35 },
-  { x: 86, y: 35 },
+  { x: 14, y: 69 }, { x: 38, y: 74 }, { x: 62, y: 74 }, { x: 86, y: 69 },
+  { x: 38, y: 55 }, { x: 62, y: 55 },
+  { x: 14, y: 35 }, { x: 50, y: 35 }, { x: 86, y: 35 },
   { x: 50, y: 16 }
 ];
 
-let POSITIONS = POSITIONS_433;
+const POSITIONS_8_331 = [
+  { x: 50, y: 90, isGk: true },
+  { x: 20, y: 70 }, { x: 50, y: 74 }, { x: 80, y: 70 },
+  { x: 20, y: 45 }, { x: 50, y: 45 }, { x: 80, y: 45 },
+  { x: 50, y: 20 }
+];
+
+const POSITIONS_8_322 = [
+  { x: 50, y: 90, isGk: true },
+  { x: 20, y: 70 }, { x: 50, y: 74 }, { x: 80, y: 70 },
+  { x: 35, y: 45 }, { x: 65, y: 45 },
+  { x: 35, y: 22 }, { x: 65, y: 22 }
+];
+
+const POSITIONS_8_232 = [
+  { x: 50, y: 90, isGk: true },
+  { x: 30, y: 72 }, { x: 70, y: 72 },
+  { x: 20, y: 45 }, { x: 50, y: 45 }, { x: 80, y: 45 },
+  { x: 35, y: 22 }, { x: 65, y: 22 }
+];
+
+const POSITIONS_6_221 = [
+  { x: 50, y: 90, isGk: true },
+  { x: 30, y: 70 }, { x: 70, y: 70 },
+  { x: 30, y: 44 }, { x: 70, y: 44 },
+  { x: 50, y: 20 }
+];
+
+const POSITIONS_6_131 = [
+  { x: 50, y: 90, isGk: true },
+  { x: 50, y: 70 },
+  { x: 18, y: 45 }, { x: 50, y: 48 }, { x: 82, y: 45 },
+  { x: 50, y: 20 }
+];
+
+const POSITIONS_6_212 = [
+  { x: 50, y: 90, isGk: true },
+  { x: 30, y: 70 }, { x: 70, y: 70 },
+  { x: 50, y: 48 },
+  { x: 30, y: 22 }, { x: 70, y: 22 }
+];
+
+let POSITIONS = POSITIONS_11_433;
 
 let LINEUPS = {
   0:  ["Boaz", "Hugo", "Gijs", "Djim", "Mees", "Jesse", "Danilo", "Sven", "Mads", "Tycho", "Mohammed"],
@@ -339,7 +369,8 @@ let state = {
   goals: [],
   teamName: "JO16-2",
   customLogo: "IMG_0119.jpeg",
-  formationType: "4-3-3"
+  formationType: "11v11_433",
+  formationCategory: "11v11"
 };
 
 function initMinutes() {
@@ -347,12 +378,12 @@ function initMinutes() {
 }
 
 function saveState() {
-  try { localStorage.setItem("spirit_jo16_2_state_v2", JSON.stringify({ state, LINEUPS })); } catch(e) {}
+  try { localStorage.setItem("spirit_coach_state_v3", JSON.stringify({ state, LINEUPS })); } catch(e) {}
 }
 
 function loadState() {
   try {
-    const raw = localStorage.getItem("spirit_jo16_2_state_v2") || localStorage.getItem("spirit_jo16_2_state_v1");
+    const raw = localStorage.getItem("spirit_coach_state_v3") || localStorage.getItem("spirit_jo16_2_state_v2") || localStorage.getItem("spirit_jo16_2_state_v1");
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.state) {
@@ -366,11 +397,22 @@ function loadState() {
     }
   } catch(e) {}
   
-  if (state.formationType === '4-4-2') POSITIONS = POSITIONS_442;
-  else if (state.formationType === '4-2-3-1') POSITIONS = POSITIONS_4231;
-  else POSITIONS = POSITIONS_433;
-
+  applyStoredFormation();
   initMinutes();
+}
+
+function applyStoredFormation() {
+  const t = state.formationType || "11v11_433";
+  if (t === '11v11_433') { POSITIONS = POSITIONS_11_433; state.formationCategory = '11v11'; }
+  else if (t === '11v11_442') { POSITIONS = POSITIONS_11_442; state.formationCategory = '11v11'; }
+  else if (t === '11v11_4231') { POSITIONS = POSITIONS_11_4231; state.formationCategory = '11v11'; }
+  else if (t === '8v8_331') { POSITIONS = POSITIONS_8_331; state.formationCategory = '8v8'; }
+  else if (t === '8v8_322') { POSITIONS = POSITIONS_8_322; state.formationCategory = '8v8'; }
+  else if (t === '8v8_232') { POSITIONS = POSITIONS_8_232; state.formationCategory = '8v8'; }
+  else if (t === '6v6_221') { POSITIONS = POSITIONS_6_221; state.formationCategory = '6v6'; }
+  else if (t === '6v6_131') { POSITIONS = POSITIONS_6_131; state.formationCategory = '6v6'; }
+  else if (t === '6v6_212') { POSITIONS = POSITIONS_6_212; state.formationCategory = '6v6'; }
+  else { POSITIONS = POSITIONS_11_433; state.formationCategory = '11v11'; }
 }
 
 function formatTimeMMSS(totalSec) {
@@ -444,10 +486,11 @@ function renderBlocks() {
 
 function handleBlockClick(min) {
   state.selectedPlayer = null;
+  const neededCount = POSITIONS.length;
   if (state.previewBlock === min) {
     const lineup = (LINEUPS[min] || []).filter(p => !state.absent.includes(p));
     const available = state.players.filter(p => !state.absent.includes(p));
-    while (lineup.length < 11 && lineup.length < available.length) {
+    while (lineup.length < neededCount && lineup.length < available.length) {
       const next = available.find(p => !lineup.includes(p));
       if (next) lineup.push(next); else break;
     }
@@ -462,16 +505,26 @@ function handleBlockClick(min) {
 }
 
 function getDisplayedField() {
+  const neededCount = POSITIONS.length;
   if (state.previewBlock !== null) {
     const lineup = (LINEUPS[state.previewBlock] || []).filter(p => !state.absent.includes(p));
     const available = state.players.filter(p => !state.absent.includes(p));
-    while (lineup.length < 11 && lineup.length < available.length) {
+    while (lineup.length < neededCount && lineup.length < available.length) {
       const next = available.find(p => !lineup.includes(p));
       if (next) lineup.push(next); else break;
     }
     return lineup;
   }
-  return state.activeField;
+  const lineup = [...state.activeField];
+  const available = state.players.filter(p => !state.absent.includes(p));
+  while (lineup.length < neededCount && lineup.length < available.length) {
+    const next = available.find(p => !lineup.includes(p));
+    if (next) lineup.push(next); else break;
+  }
+  if (lineup.length > neededCount) {
+    lineup.length = neededCount;
+  }
+  return lineup;
 }
 
 function renderPitchAndBench() {
@@ -485,7 +538,7 @@ function renderPitchAndBench() {
     const min = state.minutes[name] || 0;
     const initial = name ? name.charAt(0).toUpperCase() : "";
     return `
-      <div class="player-node" style="left:${pos.x}%;top:${pos.y}%;" onclick="handlePlayerTap('${(name || "").replace(/'/g, "\'")}')">
+      <div class="player-node" style="left:${pos.x}%;top:${pos.y}%;" onclick="handlePlayerTap('${(name || "").replace(/'/g, "'")}')">
         <div class="ball ${isGk ? 'gk' : 'field'} ${isSel ? 'selected' : ''}">
           ${initial}
           <div class="min-badge">${min}</div>
@@ -504,7 +557,7 @@ function renderPitchAndBench() {
     const min = state.minutes[name] || 0;
     const initial = name ? name.charAt(0).toUpperCase() : "";
     return `
-      <div class="bench-slot" onclick="handlePlayerTap('${(name || "").replace(/'/g, "\'")}')">
+      <div class="bench-slot" onclick="handlePlayerTap('${(name || "").replace(/'/g, "'")}')">
         <div class="ball bench ${isSel ? 'selected' : ''}">
           ${initial}
           <div class="min-badge">${min}</div>
@@ -551,7 +604,7 @@ function renderSpelersTab() {
         <div class="dot-green"></div>
         <div class="row-name">${name}</div>
       </div>
-      <button class="circle-action btn-red" onclick="setAbsent('${name.replace(/'/g, "\'")}', true)">−</button>
+      <button class="circle-action btn-red" onclick="setAbsent('${name.replace(/'/g, "'")}', true)">−</button>
     </div>`).join("");
 
   const absentHtml = absent.map(name => `
@@ -559,11 +612,11 @@ function renderSpelersTab() {
       <div class="row-left">
         <div class="row-name" style="color:#a1a1aa;">${name}</div>
       </div>
-      <button class="circle-action btn-green" onclick="setAbsent('${name.replace(/'/g, "\'")}', false)">+</button>
+      <button class="circle-action btn-green" onclick="setAbsent('${name.replace(/'/g, "'")}', false)">+</button>
     </div>`).join("");
 
   const chipsHtml = state.players.map(name => `
-    <button class="del-chip" onclick="deletePlayer('${name.replace(/'/g, "\'")}')">✕ ${name}</button>
+    <button class="del-chip" onclick="deletePlayer('${name.replace(/'/g, "'")}')">✕ ${name}</button>
   `).join("");
 
   document.getElementById("tab-spelers").innerHTML = `
@@ -685,6 +738,7 @@ function saveTeamSettings() {
 
 function resetFullTeam() {
   if (confirm("Weet je zeker dat je het volledige team en alle opgeslagen line-ups wilt wissen om een nieuw team te starten?")) {
+    localStorage.removeItem("spirit_coach_state_v3");
     localStorage.removeItem("spirit_jo16_2_state_v2");
     localStorage.removeItem("spirit_jo16_2_state_v1");
     location.reload();
@@ -692,14 +746,53 @@ function resetFullTeam() {
 }
 
 function openFormationModal() {
+  if (!state.formationCategory) state.formationCategory = '11v11';
+  renderFormationModalList();
   document.getElementById("formationModal").classList.add("open");
+}
+
+function setFormationCategory(cat) {
+  state.formationCategory = cat;
+  renderFormationModalList();
+}
+
+function renderFormationModalList() {
+  ['6v6', '8v8', '11v11'].forEach(c => {
+    const btn = document.getElementById(`catBtn-${c}`);
+    if (btn) btn.classList.toggle("active", c === state.formationCategory);
+  });
+
+  const listEl = document.getElementById("formationListContainer");
+  let items = [];
+
+  if (state.formationCategory === '6v6') {
+    items = [
+      { id: '6v6_221', name: '2-2-1 (Verdediging - Midden - Spits)' },
+      { id: '6v6_131', name: '1-3-1 (Diamant)' },
+      { id: '6v6_212', name: '2-1-2 (Twee achter, één midden, twee voor)' }
+    ];
+  } else if (state.formationCategory === '8v8') {
+    items = [
+      { id: '8v8_331', name: '3-3-1 (Standaard 8v8)' },
+      { id: '8v8_322', name: '3-2-2 (Drie achter, twee midden, twee voor)' },
+      { id: '8v8_232', name: '2-3-2 (Twee achter, drie midden, twee voor)' }
+    ];
+  } else {
+    items = [
+      { id: '11v11_433', name: '4-3-3 (Standaard)' },
+      { id: '11v11_442', name: '4-4-2 (Vier achter, vier midden, twee voor)' },
+      { id: '11v11_4231', name: '4-2-3-1 (Controlerend middenveld)' }
+    ];
+  }
+
+  listEl.innerHTML = items.map(item => `
+    <button class="modal-btn ${state.formationType === item.id ? 'green' : ''}" style="margin-bottom:0;" onclick="applyFormation('${item.id}')">${item.name}</button>
+  `).join("");
 }
 
 function applyFormation(type) {
   state.formationType = type;
-  if (type === '4-4-2') POSITIONS = POSITIONS_442;
-  else if (type === '4-3-3') POSITIONS = POSITIONS_433;
-  else if (type === '4-2-3-1') POSITIONS = POSITIONS_4231;
+  applyStoredFormation();
   saveState();
   closeModals();
   renderAll();
@@ -797,9 +890,10 @@ function resetMatch() {
   state.players.forEach(p => { state.minutes[p] = 0; });
   const firstKey = Object.keys(LINEUPS).map(Number).sort((a,b) => a - b)[0] || 0;
   state.activeBlock = firstKey;
+  const neededCount = POSITIONS.length;
   const lineup = (LINEUPS[firstKey] || []).filter(p => !state.absent.includes(p));
   const available = state.players.filter(p => !state.absent.includes(p));
-  while (lineup.length < 11 && lineup.length < available.length) {
+  while (lineup.length < neededCount && lineup.length < available.length) {
     const next = available.find(p => !lineup.includes(p));
     if (next) lineup.push(next); else break;
   }
@@ -822,12 +916,12 @@ function openSpiritGoalModal() {
 function renderGoalPickers() {
   const onField = state.activeField;
   document.getElementById("scorerGrid").innerHTML = onField.map(p => `
-    <button class="pick-btn ${tempScorer === p ? 'chosen' : ''}" onclick="selectScorer('${p.replace(/'/g, "\'")}')">${p}</button>
+    <button class="pick-btn ${tempScorer === p ? 'chosen' : ''}" onclick="selectScorer('${p.replace(/'/g, "'")}')">${p}</button>
   `).join("");
 
   const assistOpts = ["Geen", ...onField.filter(p => p !== tempScorer)];
   document.getElementById("assistGrid").innerHTML = assistOpts.map(p => `
-    <button class="pick-btn ${tempAssist === p ? 'chosen' : ''}" onclick="selectAssist('${p.replace(/'/g, "\'")}')">${p}</button>
+    <button class="pick-btn ${tempAssist === p ? 'chosen' : ''}" onclick="selectAssist('${p.replace(/'/g, "'")}')">${p}</button>
   `).join("");
 
   document.getElementById("goalLog").innerHTML = state.goals.length
