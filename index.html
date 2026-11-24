@@ -341,7 +341,8 @@ let state = {
   lastTick: null,
   goals: [],
   teamName: "JO16-2",
-  customLogo: "IMG_0119.jpeg"
+  customLogo: "IMG_0119.jpeg",
+  formationType: "4-3-3"
 };
 
 function initMinutes() {
@@ -367,6 +368,11 @@ function loadState() {
       if (!state.customLogo) state.customLogo = "IMG_0119.jpeg";
     }
   } catch(e) {}
+  
+  if (state.formationType === '4-4-2') POSITIONS = POSITIONS_442;
+  else if (state.formationType === '4-2-3-1') POSITIONS = POSITIONS_4231;
+  else POSITIONS = POSITIONS_433;
+
   initMinutes();
 }
 
@@ -693,9 +699,11 @@ function openFormationModal() {
 }
 
 function applyFormation(type) {
+  state.formationType = type;
   if (type === '4-4-2') POSITIONS = POSITIONS_442;
   else if (type === '4-3-3') POSITIONS = POSITIONS_433;
   else if (type === '4-2-3-1') POSITIONS = POSITIONS_4231;
+  saveState();
   closeModals();
   renderAll();
 }
