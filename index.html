@@ -247,7 +247,7 @@
       <div style="text-align:center; padding: 12px 0 20px;">
         <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:10px;">Developed by Daniel van Soest</p>
         <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:14px;">danielvs69@outlook.com</a>
-        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Versie 1.7</p>
+        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Versie 1.8</p>
       </div>
       <button class="modal-btn" onclick="closeModals()">Sluiten</button>
     </div>
@@ -265,7 +265,6 @@
         <div id="modalLogoPreview" style="width:52px;height:52px;border-radius:50%;background:#fff;border:2px solid #facc15;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
         <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
         <button class="add-btn" style="padding:10px 14px;flex:1;" onclick="document.getElementById('logoFileInput').click()">📷 Kies foto</button>
-        <button class="del-chip" style="background:#dc2626;border:none;color:white;padding:10px 12px;" onclick="removeCustomLogo()">Wis</button>
       </div>
 
       <button class="modal-btn green" onclick="saveTeamSettings()">Opslaan</button>
@@ -448,12 +447,12 @@ function initMinutes() {
 }
 
 function saveState() {
-  try { localStorage.setItem("spirit_coach_state_v3", JSON.stringify({ state, LINEUPS })); } catch(e) {}
+  try { localStorage.setItem("spirit_coach_state_v4", JSON.stringify({ state, LINEUPS })); } catch(e) {}
 }
 
 function loadState() {
   try {
-    const raw = localStorage.getItem("spirit_coach_state_v3") || localStorage.getItem("spirit_jo16_2_state_v2") || localStorage.getItem("spirit_jo16_2_state_v1");
+    const raw = localStorage.getItem("spirit_coach_state_v4") || localStorage.getItem("spirit_jo16_2_state_v2") || localStorage.getItem("spirit_jo16_2_state_v1");
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.state) {
@@ -839,7 +838,7 @@ function saveTeamSettings() {
 
 function resetFullTeam() {
   if (confirm("Weet je zeker dat je het volledige team en alle opgeslagen line-ups wilt wissen om een nieuw team te starten?")) {
-    localStorage.removeItem("spirit_coach_state_v3");
+    localStorage.removeItem("spirit_coach_state_v4");
     localStorage.removeItem("spirit_jo16_2_state_v2");
     localStorage.removeItem("spirit_jo16_2_state_v1");
     location.reload();
@@ -1331,7 +1330,7 @@ async function shareSpeeltijdSummary() {
   }
 }
 
-const CURRENT_APP_VERSION = "1.7";
+const CURRENT_APP_VERSION = "1.8";
 
 async function checkForUpdates() {
   try {
