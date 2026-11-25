@@ -246,7 +246,7 @@
       <div style="text-align:center; padding: 12px 0 20px;">
         <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:10px;">Developed by Daniel van Soest</p>
         <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:14px;">danielvs69@outlook.com</a>
-        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Version 2.3</p>
+        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Version 2.4</p>
       </div>
       <button class="modal-btn" onclick="closeModals()">Close</button>
     </div>
@@ -434,6 +434,22 @@ function initMinutes() {
   state.players.forEach(p => { if (typeof state.minutes[p] !== "number") state.minutes[p] = 0; });
 }
 
+function syncActiveField() {
+  const neededCount = POSITIONS.length;
+  const available = state.players.filter(p => !state.absent.includes(p));
+  state.activeField = state.activeField.filter(p => available.includes(p));
+  while (state.activeField.length < neededCount && state.activeField.length < available.length) {
+    const next = available.find(p => !state.activeField.includes(p));
+    if (next) state.activeField.push(next); else break;
+  }
+  if (state.activeField.length > neededCount) {
+    state.activeField.length = neededCount;
+  }
+  if (state.activeBlock === 0 && (!LINEUPS[0] || LINEUPS[0].length === 0)) {
+    LINEUPS[0] = [...state.activeField];
+  }
+}
+
 function saveState() {
   try { localStorage.setItem("spirit_coach_state_v6", JSON.stringify({ state, LINEUPS })); } catch(e) {}
 }
@@ -460,6 +476,7 @@ function loadState() {
   
   applyStoredFormation();
   initMinutes();
+  syncActiveField();
 }
 
 function applyStoredFormation() {
@@ -568,16 +585,8 @@ function getDisplayedField() {
     }
     return lineup;
   }
-  const lineup = [...state.activeField];
-  const available = state.players.filter(p => !state.absent.includes(p));
-  while (lineup.length < neededCount && lineup.length < available.length) {
-    const next = available.find(p => !lineup.includes(p));
-    if (next) lineup.push(next); else break;
-  }
-  if (lineup.length > neededCount) {
-    lineup.length = neededCount;
-  }
-  return lineup;
+  syncActiveField();
+  return [...state.activeField];
 }
 
 function renderPitchAndBench() {
@@ -624,6 +633,7 @@ function handlePlayerTap(name) {
   if (state.previewBlock !== null) {
     state.previewBlock = null;
   }
+  syncActiveField();
   if (!state.selectedPlayer) {
     state.selectedPlayer = name;
   } else if (state.selectedPlayer === name) {
@@ -640,6 +650,9 @@ function handlePlayerTap(name) {
       state.activeField[idx1] = p2;
     } else if (idx1 === -1 && idx2 !== -1) {
       state.activeField[idx2] = p1;
+    }
+    if (state.activeBlock === 0) {
+      LINEUPS[0] = [...state.activeField];
     }
     state.selectedPlayer = null;
   }
@@ -706,6 +719,7 @@ function setAbsent(name, makeAbsent) {
   } else {
     state.absent = state.absent.filter(p => p !== name);
   }
+  syncActiveField();
   saveState();
   renderAll();
 }
@@ -716,6 +730,7 @@ function addPlayer() {
   if (!val || state.players.includes(val)) return;
   state.players.push(val);
   state.minutes[val] = 0;
+  syncActiveField();
   saveState();
   renderAll();
 }
@@ -725,6 +740,7 @@ function deletePlayer(name) {
   state.absent = state.absent.filter(p => p !== name);
   state.activeField = state.activeField.filter(p => p !== name);
   delete state.minutes[name];
+  syncActiveField();
   saveState();
   renderAll();
 }
@@ -876,6 +892,7 @@ function renderFormationModalList() {
 function applyFormation(type) {
   state.formationType = type;
   applyStoredFormation();
+  syncActiveField();
   saveState();
   closeModals();
   renderAll();
@@ -924,6 +941,7 @@ function executeDeleteLineupSelected() {
       selectedEditMin = remaining[0];
       state.activeBlock = remaining[0];
       state.activeField = [...LINEUPS[state.activeBlock]];
+      syncActiveField();
       saveState();
       closeModals();
       renderAll();
@@ -1304,7 +1322,7 @@ async function shareSpeeltijdSummary() {
   }
 }
 
-const CURRENT_APP_VERSION = "2.3";
+const CURRENT_APP_VERSION = "2.4";
 
 async function checkForUpdates() {
   try {
