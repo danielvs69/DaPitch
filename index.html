@@ -232,15 +232,7 @@
     </div>
   </div>
 
-  <!-- Playing Time Overview Modal -->
-  <div class="modal-backdrop" id="speeltijdModal" onclick="closeModals(event)">
-    <div class="modal-box" onclick="event.stopPropagation()">
-      <div class="modal-title">Playing Time Overview</div>
-      <div id="speeltijdModalContent"></div>
-      <button class="modal-btn green" style="display:flex;align-items:center;justify-content:center;gap:8px;" onclick="shareSpeeltijdSummary()"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>Share</span></button>
-      <button class="modal-btn" onclick="closeModals()">Close</button>
-    </div>
-  </div>
+
 
   <!-- Info Modal (Developer & Speed Test) -->
   <div class="modal-backdrop" id="infoModal" onclick="closeModals(event)">
@@ -249,7 +241,7 @@
       <div style="text-align:center; padding: 6px 0 14px;">
         <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:8px;">Developed by Daniel van Soest</p>
         <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:12px;">danielvs69@outlook.com</a>
-        <p style="font-size:14px; font-weight:800; color:#a1a1aa; margin-bottom:14px;">Version 2.7</p>
+        <p style="font-size:14px; font-weight:800; color:#a1a1aa; margin-bottom:14px;">Version 2.8</p>
       </div>
       <div style="border-top:1px solid #2c2c2e; padding-top:12px; margin-bottom:12px;">
         <div style="font-size:13px; font-weight:900; color:#facc15; margin-bottom:6px; text-align:center; text-transform:uppercase; letter-spacing:0.5px;">Simulation Speed</div>
@@ -759,7 +751,8 @@ function renderSpeeltijdTab() {
   
   const matchMin = Math.max(1, Math.floor(state.elapsedSec / 60));
   
-  const btnHtml = `<button class="modal-btn" style="background:#2563eb;margin-bottom:12px;" onclick="openSpeeltijdModal()">⏱️ Playing Time Overview</button>`;
+  const shareSvg = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
+  const btnHtml = `<button class="modal-btn green" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;" onclick="shareSpeeltijdSummary()">${shareSvg}<span>Share Playing Time</span></button>`;
   
   const listHtml = sorted.map(name => {
     const mins = state.minutes[name] || 0;
@@ -1253,22 +1246,24 @@ async function shareCanvasAsImage(canvas, filename, title, fallbackText) {
         return;
       }
       const file = new File([blob], filename, { type: "image/png" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      if (navigator.share) {
         try {
-          await navigator.share({
-            files: [file],
-            title: title
-          });
-          resolve();
-          return;
+          if (!navigator.canShare || navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: title
+            });
+            resolve();
+            return;
+          }
         } catch (err) {
-          if (err.name === 'AbortError') {
+          if (err && err.name === 'AbortError') {
             resolve();
             return;
           }
         }
       }
-      // Fallback: download image directly so user can easily share it
+      // Fallback: download image directly as PNG
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -1703,31 +1698,33 @@ async function shareMatchSummary() {
   );
 }
 
-// 3. Graphical Share: Playing Time Overview of all available players (from Playing Time modal)
+// 3. Graphical Share: Playing Time Overview of ALL available players (directly from Playing Time tab)
 async function shareSpeeltijdSummary() {
   const teamLabel = state.teamName || "My Team";
   const presentPlayers = state.players
     .filter(p => !state.absent.includes(p))
     .sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
 
-  const matchMin = Math.max(1, Math.floor(state.elapsedSec / 60));
+  const totalMin = Math.floor(state.elapsedSec / 60);
+  const matchMin = Math.max(1, totalMin);
   const width = 900;
-  const headerH = 135;
-  const rowH = 74;
-  const height = headerH + Math.max(1, presentPlayers.length) * rowH + 65;
+  const headerH = 140;
+  const rowH = 76;
+  const count = Math.max(1, presentPlayers.length);
+  const height = headerH + count * rowH + 65;
 
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
 
-  // Background
+  // Full background
   ctx.fillStyle = "#111113";
   ctx.fillRect(0, 0, width, height);
 
   // Header Card
   ctx.fillStyle = "#1c1c1e";
-  drawRoundedRect(ctx, 24, 20, width - 48, 96, 22);
+  drawRoundedRect(ctx, 24, 20, width - 48, 98, 22);
   ctx.fill();
   ctx.strokeStyle = "#2c2c2e";
   ctx.lineWidth = 2.5;
@@ -1740,54 +1737,60 @@ async function shareSpeeltijdSummary() {
 
   ctx.fillStyle = "#a1a1aa";
   ctx.font = "800 20px -apple-system, BlinkMacSystemFont, sans-serif";
-  ctx.fillText(`Available Squad (${presentPlayers.length} players) • Total Match Time: ${Math.floor(state.elapsedSec / 60)}'`, 48, 96);
+  ctx.fillText(`Available Squad (${presentPlayers.length} players) • Match Time: ${totalMin}'`, 48, 96);
 
-  // Player rows
-  presentPlayers.forEach((name, idx) => {
-    const y = headerH + idx * rowH;
-    const mins = state.minutes[name] || 0;
-    const pct = (mins / matchMin) * 100;
+  if (presentPlayers.length === 0) {
+    ctx.fillStyle = "#71717a";
+    ctx.font = "800 24px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("No available players", width / 2, headerH + 40);
+  } else {
+    presentPlayers.forEach((name, idx) => {
+      const y = headerH + idx * rowH;
+      const mins = state.minutes[name] || 0;
+      const pct = (mins / matchMin) * 100;
 
-    let minColor = "#ef4444"; // < 25%
-    if (pct >= 75) minColor = "#38bdf8";      // >= 75%
-    else if (pct >= 50) minColor = "#4ade80"; // >= 50%
-    else if (pct >= 25) minColor = "#facc15"; // >= 25%
+      let minColor = "#ef4444"; // < 25%
+      if (pct >= 75) minColor = "#38bdf8";      // >= 75%
+      else if (pct >= 50) minColor = "#4ade80"; // >= 50%
+      else if (pct >= 25) minColor = "#facc15"; // >= 25%
 
-    // Card background
-    ctx.fillStyle = "#1c1c1e";
-    drawRoundedRect(ctx, 24, y, width - 48, 62, 16);
-    ctx.fill();
-    ctx.strokeStyle = "#2c2c2e";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+      // Card background
+      ctx.fillStyle = "#1c1c1e";
+      drawRoundedRect(ctx, 24, y, width - 48, 64, 16);
+      ctx.fill();
+      ctx.strokeStyle = "#2c2c2e";
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-    // Name
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "900 24px -apple-system, BlinkMacSystemFont, sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText(name, 46, y + 32);
+      // Name
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 24px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(name, 46, y + 33);
 
-    // Minutes
-    ctx.fillStyle = minColor;
-    ctx.font = "900 26px -apple-system, BlinkMacSystemFont, sans-serif";
-    ctx.textAlign = "right";
-    ctx.fillText(`${mins}'`, width - 46, y + 32);
+      // Minutes
+      ctx.fillStyle = minColor;
+      ctx.font = "900 26px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(`${mins}'`, width - 46, y + 33);
 
-    // Progress Bar Background
-    const barX = 46;
-    const barY = y + 43;
-    const barW = width - 92;
-    const barH = 8;
-    ctx.fillStyle = "#27272a";
-    drawRoundedRect(ctx, barX, barY, barW, barH, 4);
-    ctx.fill();
+      // Progress Bar Background
+      const barX = 46;
+      const barY = y + 45;
+      const barW = width - 92;
+      const barH = 8;
+      ctx.fillStyle = "#27272a";
+      drawRoundedRect(ctx, barX, barY, barW, barH, 4);
+      ctx.fill();
 
-    // Progress Bar Fill
-    const fillRatio = Math.min(1, Math.max(0.03, mins / matchMin));
-    ctx.fillStyle = "#16a34a";
-    drawRoundedRect(ctx, barX, barY, barW * fillRatio, barH, 4);
-    ctx.fill();
-  });
+      // Progress Bar Fill
+      const fillRatio = Math.min(1, Math.max(0.03, mins / matchMin));
+      ctx.fillStyle = "#16a34a";
+      drawRoundedRect(ctx, barX, barY, barW * fillRatio, barH, 4);
+      ctx.fill();
+    });
+  }
 
   // Watermark
   ctx.fillStyle = "#71717a";
@@ -1795,15 +1798,20 @@ async function shareSpeeltijdSummary() {
   ctx.textAlign = "center";
   ctx.fillText("Da Pitch • Playing Time Overview", width / 2, height - 18);
 
+  let fallbackText = `⏱️ Playing Time Overview ${teamLabel}\n\n`;
+  presentPlayers.forEach(p => {
+    fallbackText += `• ${p}: ${state.minutes[p] || 0}'\n`;
+  });
+
   await shareCanvasAsImage(
     canvas,
     `PlayingTime_${teamLabel.replace(/\s+/g, '_')}.png`,
     `Playing Time Overview ${teamLabel}`,
-    `Playing Time Overview ${teamLabel}`
+    fallbackText
   );
 }
 
-const CURRENT_APP_VERSION = "2.7";
+const CURRENT_APP_VERSION = "2.8";
 
 async function checkForUpdates() {
   try {
