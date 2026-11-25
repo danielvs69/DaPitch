@@ -1,0 +1,25 @@
+{
+  "name": "Da Pitch",
+  "short_name": "Da Pitch",
+  "description": "Lightning-fast sideline stopwatch, fair playing time tracker, and quick line-up rotation manager for football coaches.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "DaPitchLogo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "DaPitchLogo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
