@@ -249,11 +249,11 @@
       <div style="text-align:center; padding: 6px 0 14px;">
         <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:8px;">Developed by Daniel van Soest</p>
         <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:12px;">danielvs69@outlook.com</a>
-        <p style="font-size:14px; font-weight:800; color:#a1a1aa; margin-bottom:14px;">Version 2.6</p>
+        <p style="font-size:14px; font-weight:800; color:#a1a1aa; margin-bottom:14px;">Version 2.7</p>
       </div>
       <div style="border-top:1px solid #2c2c2e; padding-top:12px; margin-bottom:12px;">
         <div style="font-size:13px; font-weight:900; color:#facc15; margin-bottom:6px; text-align:center; text-transform:uppercase; letter-spacing:0.5px;">Simulation Speed</div>
-        <button class="modal-btn" id="speedToggleBtn" style="background:#27272a; border:2px solid #3f3f46;" onclick="toggleSimSpeed()">⚡ 10x Speed: OFF</button>
+        <button class="modal-btn" id="speedToggleBtn" style="background:#27272a; border:2px solid #3f3f46;" onclick="toggleSimSpeed()">⚡ 30x Speed: OFF</button>
       </div>
       <button class="modal-btn" onclick="closeModals()">Close</button>
     </div>
@@ -827,7 +827,7 @@ function openTimeModal() {
 }
 
 function toggleSimSpeed() {
-  state.simSpeed = (state.simSpeed === 10) ? 1 : 10;
+  state.simSpeed = (state.simSpeed === 30) ? 1 : 30;
   saveState();
   updateSpeedButtonUI();
 }
@@ -835,13 +835,13 @@ function toggleSimSpeed() {
 function updateSpeedButtonUI() {
   const btn = document.getElementById("speedToggleBtn");
   if (!btn) return;
-  if (state.simSpeed === 10) {
-    btn.textContent = "⚡ 10x Speed: ON";
+  if (state.simSpeed === 30) {
+    btn.textContent = "⚡ 30x Speed: ON";
     btn.style.background = "#16a34a";
     btn.style.borderColor = "#4ade80";
     btn.style.color = "#ffffff";
   } else {
-    btn.textContent = "⚡ 10x Speed: OFF";
+    btn.textContent = "⚡ 30x Speed: OFF";
     btn.style.background = "#27272a";
     btn.style.borderColor = "#3f3f46";
     btn.style.color = "#ffffff";
@@ -1243,118 +1243,60 @@ function openSummaryModal() {
   document.getElementById("summaryModal").classList.add("open");
 }
 
-async function shareMatchSummary() {
-  const teamLabel = state.teamName || "My Team";
-  const leftName = state.isHome ? teamLabel : "Opponent";
-  const rightName = state.isHome ? "Opponent" : teamLabel;
-  const leftScore = state.isHome ? state.spiritScore : state.oppScore;
-  const rightScore = state.isHome ? state.oppScore : state.spiritScore;
-
-  let text = `⚽ *Match Overview ${leftName} - ${rightName}*\n`;
-  text += `Final Score: *${leftScore} - ${rightScore}*\n\n`;
-
-  const timeline = buildTimelineData();
-  if (timeline.length > 0) {
-    text += `*Score Progression:*\n`;
-    timeline.forEach(item => {
-      const assistStr = (item.isSpirit && item.assist && item.assist !== 'None' && item.assist !== 'Geen') ? ` (${item.assist})` : '';
-      text += `${item.min}' ⚽ ${item.scorer}${assistStr} [${item.scoreStr}]\n`;
-    });
-    text += `\n`;
-  }
-
-  const presentPlayers = state.players
-    .filter(p => !state.absent.includes(p))
-    .sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
-
-  text += `*Playing Time:*\n`;
-  presentPlayers.forEach(p => {
-    text += `• ${p}: ${state.minutes[p] || 0} min\n`;
+// Helper to share a generated Canvas PNG image via Web Share API (or download fallback)
+async function shareCanvasAsImage(canvas, filename, title, fallbackText) {
+  return new Promise((resolve) => {
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        alert(fallbackText);
+        resolve();
+        return;
+      }
+      const file = new File([blob], filename, { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: title
+          });
+          resolve();
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            resolve();
+            return;
+          }
+        }
+      }
+      // Fallback: download image directly so user can easily share it
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      resolve();
+    }, "image/png");
   });
-
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: `Result ${leftName} - ${rightName}`, text });
-      return;
-    } catch (err) {
-      if (err.name === 'AbortError') return;
-    }
-  }
-
-  try {
-    await navigator.clipboard.writeText(text);
-    alert("Match overview copied to clipboard! Ready to paste in WhatsApp.");
-  } catch (e) {
-    alert(text);
-  }
 }
 
-function openSpeeltijdModal() {
-  const present = state.players.filter(p => !state.absent.includes(p));
-  const sorted = present.sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
-  
-  const matchMin = Math.max(1, Math.floor(state.elapsedSec / 60));
-
-  const listHtml = sorted.map(name => {
-    const mins = state.minutes[name] || 0;
-    const pct = (mins / matchMin) * 100;
-    let colorClass = 'min-red';
-    if (pct >= 75) colorClass = 'min-blue';
-    else if (pct >= 50) colorClass = 'min-green';
-    else if (pct >= 25) colorClass = 'min-yellow';
-
-    const barWidth = Math.min(100, Math.max(4, (mins / matchMin) * 100));
-
-    return `
-      <div class="speeltijd-card" style="margin-bottom:6px;">
-        <div class="st-top-row">
-          <div class="st-name" style="font-size:15px;">${name}</div>
-          <div class="st-min ${colorClass}" style="font-size:15px;">${mins}'</div>
-        </div>
-        <div class="st-bar-bg" style="height:5px;">
-          <div class="st-bar-fill" style="width: ${barWidth}%;"></div>
-        </div>
-      </div>`;
-  }).join("");
-
-  document.getElementById("speeltijdModalContent").innerHTML = `
-    <div style="max-height:55vh;overflow-y:auto;padding-right:2px;">
-      ${listHtml}
-    </div>
-  `;
-
-  document.getElementById("speeltijdModal").classList.add("open");
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 
-async function shareSpeeltijdSummary() {
-  const teamLabel = state.teamName || "My Team";
-  let text = `⏱️ *Playing Time Overview ${teamLabel}*\n\n`;
-
-  const presentPlayers = state.players
-    .filter(p => !state.absent.includes(p))
-    .sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
-
-  presentPlayers.forEach(p => {
-    text += `• ${p}: ${state.minutes[p] || 0}'\n`;
-  });
-
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: `Playing Time Overview ${teamLabel}`, text });
-      return;
-    } catch (err) {
-      if (err.name === 'AbortError') return;
-    }
-  }
-
-  try {
-    await navigator.clipboard.writeText(text);
-    alert("Playing time overview copied to clipboard!");
-  } catch (e) {
-    alert(text);
-  }
-}
-
+// 1. Graphical Share: Pitch + Bench (from Pitch share icon)
 async function shareLineup() {
   const teamLabel = state.teamName || "My Team";
   const blockMin = state.previewBlock !== null ? state.previewBlock : state.activeBlock;
@@ -1370,40 +1312,498 @@ async function shareLineup() {
   };
   const formLabel = formNames[state.formationType] || '';
 
-  let text = `⚽ *Line-Up ${teamLabel}* (${blockMin}'${formLabel ? ' - ' + formLabel : ''})\n\n`;
-  text += `*On Pitch (${fieldPlayers.length}):*\n`;
-  fieldPlayers.forEach((p, idx) => {
-    const role = idx === 0 ? 'GK' : `#${idx + 1}`;
-    text += `• ${role}: ${p}\n`;
+  const benchRows = Math.max(1, Math.ceil(benchPlayers.length / 6));
+  const width = 900;
+  const headerH = 120;
+  const pitchSize = 860;
+  const pitchX = 20;
+  const pitchY = headerH + 10;
+  const benchY = pitchY + pitchSize + 20;
+  const benchH = 70 + benchRows * 115;
+  const height = benchY + benchH + 55;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  // Background
+  ctx.fillStyle = "#111113";
+  ctx.fillRect(0, 0, width, height);
+
+  // Top Header Card
+  ctx.fillStyle = "#1c1c1e";
+  drawRoundedRect(ctx, 20, 16, width - 40, 96, 20);
+  ctx.fill();
+  ctx.strokeStyle = "#2c2c2e";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 34px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(teamLabel, 44, 62);
+
+  ctx.fillStyle = "#a1a1aa";
+  ctx.font = "800 22px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.fillText(`Line-Up • Minute ${blockMin}'${formLabel ? ' (' + formLabel + ')' : ''}`, 44, 94);
+
+  // Badge pill on right
+  ctx.fillStyle = "#16a34a";
+  drawRoundedRect(ctx, width - 190, 36, 146, 56, 28);
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 24px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(`${blockMin} MIN`, width - 117, 72);
+
+  // Pitch background
+  ctx.fillStyle = "#16a34a";
+  drawRoundedRect(ctx, pitchX, pitchY, pitchSize, pitchSize, 22);
+  ctx.fill();
+
+  // Pitch stripes (subtle)
+  ctx.save();
+  drawRoundedRect(ctx, pitchX, pitchY, pitchSize, pitchSize, 22);
+  ctx.clip();
+  ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
+  const stripeH = pitchSize / 10;
+  for (let i = 0; i < 10; i += 2) {
+    ctx.fillRect(pitchX, pitchY + i * stripeH, pitchSize, stripeH);
+  }
+  ctx.restore();
+
+  // Pitch markings
+  const inset = 22;
+  const lx = pitchX + inset;
+  const ly = pitchY + inset;
+  const lw = pitchSize - inset * 2;
+  const lh = pitchSize - inset * 2;
+
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(lx, ly, lw, lh);
+
+  // Halfway line & center circle
+  ctx.beginPath();
+  ctx.moveTo(lx, ly + lh / 2);
+  ctx.lineTo(lx + lw, ly + lh / 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(lx + lw / 2, ly + lh / 2, lw * 0.11, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Penalty boxes
+  const boxW = lw * 0.52;
+  const boxH = lh * 0.16;
+  ctx.strokeRect(lx + (lw - boxW) / 2, ly, boxW, boxH);
+  ctx.strokeRect(lx + (lw - boxW) / 2, ly + lh - boxH, boxW, boxH);
+
+  // Draw players on pitch
+  fieldPlayers.forEach((name, idx) => {
+    const pos = POSITIONS[idx] || { x: 50, y: 50 };
+    const isGk = idx === 0;
+    const min = state.minutes[name] || 0;
+    const initial = name ? name.charAt(0).toUpperCase() : "";
+
+    const cx = pitchX + (pos.x / 100) * pitchSize;
+    const cy = pitchY + (pos.y / 100) * pitchSize;
+    const radius = 34;
+
+    // Shadow
+    ctx.beginPath();
+    ctx.arc(cx, cy + 4, radius, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fill();
+
+    // Circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fillStyle = isGk ? "#2563eb" : "#facc15";
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = isGk ? "#ffffff" : "rgba(0,0,0,0.45)";
+    ctx.stroke();
+
+    // Initial
+    ctx.fillStyle = isGk ? "#ffffff" : "#000000";
+    ctx.font = "900 30px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(initial, cx, cy + 1);
+
+    // Minute badge
+    const bx = cx + 26;
+    const by = cy - 24;
+    ctx.beginPath();
+    ctx.arc(bx, by, 17, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#000000";
+    ctx.stroke();
+
+    ctx.fillStyle = "#000000";
+    ctx.font = "900 17px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.fillText(String(min), bx, by + 1);
+
+    // Player Name
+    ctx.textBaseline = "alphabetic";
+    ctx.font = "900 24px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillText(name, cx, cy + radius + 30);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(name, cx, cy + radius + 28);
   });
 
-  text += `\n*Bench (${benchPlayers.length}):*\n`;
-  if (benchPlayers.length > 0) {
-    benchPlayers.forEach(p => {
-      text += `• ${p}\n`;
-    });
+  // Bench section
+  ctx.fillStyle = "#052e16";
+  drawRoundedRect(ctx, 20, benchY, width - 40, benchH, 22);
+  ctx.fill();
+  ctx.strokeStyle = "#14532d";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.fillStyle = "#4ade80";
+  ctx.font = "900 22px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(`BENCH (${benchPlayers.length})`, 44, benchY + 40);
+
+  if (benchPlayers.length === 0) {
+    ctx.fillStyle = "#a1a1aa";
+    ctx.font = "800 22px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.fillText("No players on the bench", 44, benchY + 90);
   } else {
-    text += `• None\n`;
+    const cols = 6;
+    const colW = (width - 60) / cols;
+    benchPlayers.forEach((name, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const bxCenter = 30 + col * colW + colW / 2;
+      const byCenter = benchY + 95 + row * 112;
+      const r = 30;
+      const min = state.minutes[name] || 0;
+      const initial = name ? name.charAt(0).toUpperCase() : "";
+
+      ctx.beginPath();
+      ctx.arc(bxCenter, byCenter, r, 0, Math.PI * 2);
+      ctx.fillStyle = "#27272a";
+      ctx.fill();
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = "#ffffff";
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 26px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(initial, bxCenter, byCenter + 1);
+
+      // Min badge
+      const mbx = bxCenter + 22;
+      const mby = byCenter - 20;
+      ctx.beginPath();
+      ctx.arc(mbx, mby, 15, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = "#000000";
+      ctx.stroke();
+
+      ctx.fillStyle = "#000000";
+      ctx.font = "900 15px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText(String(min), mbx, mby + 1);
+
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 20px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText(name, bxCenter, byCenter + r + 24);
+    });
   }
 
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: `Line-Up ${teamLabel} (${blockMin}')`, text });
-      return;
-    } catch (err) {
-      if (err.name === 'AbortError') return;
-    }
-  }
+  // Footer watermark
+  ctx.fillStyle = "#71717a";
+  ctx.font = "800 18px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Da Pitch • Line-Up Overview", width / 2, height - 18);
 
-  try {
-    await navigator.clipboard.writeText(text);
-    alert("Line-up copied to clipboard! Ready to paste in WhatsApp.");
-  } catch (e) {
-    alert(text);
-  }
+  await shareCanvasAsImage(
+    canvas,
+    `LineUp_${teamLabel.replace(/\s+/g, '_')}_${blockMin}min.png`,
+    `Line-Up ${teamLabel} (${blockMin}')`,
+    `Line-Up ${teamLabel} (${blockMin}')`
+  );
 }
 
-const CURRENT_APP_VERSION = "2.6";
+// 2. Graphical Share: Final Score + Goalscorers & Score Progression (from Match Overview modal)
+async function shareMatchSummary() {
+  const teamLabel = state.teamName || "My Team";
+  const leftName = state.isHome ? teamLabel : "Opponent";
+  const rightName = state.isHome ? "Opponent" : teamLabel;
+  const leftScore = state.isHome ? state.spiritScore : state.oppScore;
+  const rightScore = state.isHome ? state.oppScore : state.spiritScore;
+  const timeline = buildTimelineData();
+
+  const width = 900;
+  const headerH = 250;
+  const rowH = 64;
+  const timelineCardH = Math.max(110, timeline.length * rowH + 56);
+  const height = headerH + timelineCardH + 90;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  // Background
+  ctx.fillStyle = "#111113";
+  ctx.fillRect(0, 0, width, height);
+
+  // Score Header Card
+  ctx.fillStyle = "#1c1c1e";
+  drawRoundedRect(ctx, 24, 24, width - 48, 200, 26);
+  ctx.fill();
+  ctx.strokeStyle = "#38383d";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Status Pill
+  ctx.fillStyle = state.status === "Full Time" ? "#dc2626" : "#16a34a";
+  drawRoundedRect(ctx, width / 2 - 95, 42, 190, 36, 18);
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 18px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText((state.status || "MATCH OVERVIEW").toUpperCase(), width / 2, 66);
+
+  // Teams & Score
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 32px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "right";
+  ctx.fillText(leftName, width / 2 - 120, 148);
+
+  ctx.textAlign = "left";
+  ctx.fillText(rightName, width / 2 + 120, 148);
+
+  // Big Score Box
+  ctx.fillStyle = "#242427";
+  drawRoundedRect(ctx, width / 2 - 100, 96, 200, 84, 20);
+  ctx.fill();
+  ctx.strokeStyle = "#facc15";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 50px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(`${leftScore} - ${rightScore}`, width / 2, 155);
+
+  // Section Title
+  const tlTop = 256;
+  ctx.fillStyle = "#a1a1aa";
+  ctx.font = "900 22px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("SCORE PROGRESSION & GOALSCORERS", 32, tlTop);
+
+  // Timeline Card
+  const cardTop = tlTop + 18;
+  ctx.fillStyle = "#18181b";
+  drawRoundedRect(ctx, 24, cardTop, width - 48, timelineCardH, 22);
+  ctx.fill();
+  ctx.strokeStyle = "#2c2c2e";
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  if (timeline.length === 0) {
+    ctx.fillStyle = "#71717a";
+    ctx.font = "800 24px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("No goals recorded yet", width / 2, cardTop + timelineCardH / 2 + 8);
+  } else {
+    timeline.forEach((item, i) => {
+      const y = cardTop + 56 + i * rowH;
+      const assistStr = (item.isSpirit && item.assist && item.assist !== 'None' && item.assist !== 'Geen') ? ` (${item.assist})` : '';
+
+      // Subtle divider
+      if (i > 0) {
+        ctx.strokeStyle = "#27272a";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(48, y - 38);
+        ctx.lineTo(width - 48, y - 38);
+        ctx.stroke();
+      }
+
+      if (item.isHomeGoal) {
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#facc15";
+        ctx.font = "900 24px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.fillText(`${item.min}'`, 52, y);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(`⚽  ${item.scorer}`, 115, y);
+        const nameW = ctx.measureText(`⚽  ${item.scorer}`).width;
+
+        if (assistStr) {
+          ctx.fillStyle = "#a1a1aa";
+          ctx.font = "700 22px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.fillText(assistStr, 115 + nameW, y);
+        }
+
+        // Score pill
+        const pillX = width - 140;
+        ctx.fillStyle = "#27272a";
+        drawRoundedRect(ctx, pillX, y - 26, 90, 36, 18);
+        ctx.fill();
+        ctx.strokeStyle = item.isSpirit ? "#4ade80" : "#f87171";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = item.isSpirit ? "#4ade80" : "#f87171";
+        ctx.font = "900 20px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(item.scoreStr, pillX + 45, y - 1);
+      } else {
+        // Away goal aligned right
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#facc15";
+        ctx.font = "900 24px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.fillText(`${item.min}'`, width - 52, y);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(`${item.scorer}${assistStr}  ⚽`, width - 115, y);
+        const textW = ctx.measureText(`${item.scorer}${assistStr}  ⚽`).width;
+
+        const pillX = width - 115 - textW - 110;
+        ctx.fillStyle = "#27272a";
+        drawRoundedRect(ctx, Math.max(48, pillX), y - 26, 90, 36, 18);
+        ctx.fill();
+        ctx.strokeStyle = item.isSpirit ? "#4ade80" : "#f87171";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = item.isSpirit ? "#4ade80" : "#f87171";
+        ctx.font = "900 20px -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(item.scoreStr, Math.max(48, pillX) + 45, y - 1);
+      }
+    });
+  }
+
+  // Watermark
+  ctx.fillStyle = "#71717a";
+  ctx.font = "800 18px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Da Pitch • Match Summary", width / 2, height - 20);
+
+  await shareCanvasAsImage(
+    canvas,
+    `MatchOverview_${leftName}_vs_${rightName}.png`.replace(/\s+/g, '_'),
+    `Match Overview ${leftName} - ${rightName}`,
+    `${leftName} ${leftScore} - ${rightScore} ${rightName}`
+  );
+}
+
+// 3. Graphical Share: Playing Time Overview of all available players (from Playing Time modal)
+async function shareSpeeltijdSummary() {
+  const teamLabel = state.teamName || "My Team";
+  const presentPlayers = state.players
+    .filter(p => !state.absent.includes(p))
+    .sort((a, b) => (state.minutes[b] || 0) - (state.minutes[a] || 0));
+
+  const matchMin = Math.max(1, Math.floor(state.elapsedSec / 60));
+  const width = 900;
+  const headerH = 135;
+  const rowH = 74;
+  const height = headerH + Math.max(1, presentPlayers.length) * rowH + 65;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  // Background
+  ctx.fillStyle = "#111113";
+  ctx.fillRect(0, 0, width, height);
+
+  // Header Card
+  ctx.fillStyle = "#1c1c1e";
+  drawRoundedRect(ctx, 24, 20, width - 48, 96, 22);
+  ctx.fill();
+  ctx.strokeStyle = "#2c2c2e";
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 32px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(`Playing Time • ${teamLabel}`, 48, 65);
+
+  ctx.fillStyle = "#a1a1aa";
+  ctx.font = "800 20px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.fillText(`Available Squad (${presentPlayers.length} players) • Total Match Time: ${Math.floor(state.elapsedSec / 60)}'`, 48, 96);
+
+  // Player rows
+  presentPlayers.forEach((name, idx) => {
+    const y = headerH + idx * rowH;
+    const mins = state.minutes[name] || 0;
+    const pct = (mins / matchMin) * 100;
+
+    let minColor = "#ef4444"; // < 25%
+    if (pct >= 75) minColor = "#38bdf8";      // >= 75%
+    else if (pct >= 50) minColor = "#4ade80"; // >= 50%
+    else if (pct >= 25) minColor = "#facc15"; // >= 25%
+
+    // Card background
+    ctx.fillStyle = "#1c1c1e";
+    drawRoundedRect(ctx, 24, y, width - 48, 62, 16);
+    ctx.fill();
+    ctx.strokeStyle = "#2c2c2e";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Name
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 24px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(name, 46, y + 32);
+
+    // Minutes
+    ctx.fillStyle = minColor;
+    ctx.font = "900 26px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(`${mins}'`, width - 46, y + 32);
+
+    // Progress Bar Background
+    const barX = 46;
+    const barY = y + 43;
+    const barW = width - 92;
+    const barH = 8;
+    ctx.fillStyle = "#27272a";
+    drawRoundedRect(ctx, barX, barY, barW, barH, 4);
+    ctx.fill();
+
+    // Progress Bar Fill
+    const fillRatio = Math.min(1, Math.max(0.03, mins / matchMin));
+    ctx.fillStyle = "#16a34a";
+    drawRoundedRect(ctx, barX, barY, barW * fillRatio, barH, 4);
+    ctx.fill();
+  });
+
+  // Watermark
+  ctx.fillStyle = "#71717a";
+  ctx.font = "800 18px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Da Pitch • Playing Time Overview", width / 2, height - 18);
+
+  await shareCanvasAsImage(
+    canvas,
+    `PlayingTime_${teamLabel.replace(/\s+/g, '_')}.png`,
+    `Playing Time Overview ${teamLabel}`,
+    `Playing Time Overview ${teamLabel}`
+  );
+}
+
+const CURRENT_APP_VERSION = "2.7";
 
 async function checkForUpdates() {
   try {
