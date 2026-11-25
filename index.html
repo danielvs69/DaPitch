@@ -44,6 +44,8 @@
   .center-circle { position: absolute; top: 50%; left: 50%; width: 22%; height: 22%; transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,0.45); border-radius: 50%; }
   .box-top { position: absolute; top: 0; left: 24%; width: 52%; height: 16%; border: 2px solid rgba(255,255,255,0.45); border-top: none; }
   .box-bottom { position: absolute; bottom: 0; left: 24%; width: 52%; height: 16%; border: 2px solid rgba(255,255,255,0.45); border-bottom: none; }
+  .pitch-share-btn { position: absolute; bottom: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; background: rgba(24, 24, 27, 0.85); border: 1.5px solid rgba(255, 255, 255, 0.45); color: #ffffff; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); }
+  .pitch-share-btn:active { transform: scale(0.92); border-color: #facc15; color: #facc15; }
 
   /* Player Node */
   .player-node { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; cursor: pointer; z-index: 2; }
@@ -174,6 +176,7 @@
         <div class="box-bottom"></div>
       </div>
       <div id="pitchPlayers"></div>
+      <button class="pitch-share-btn" onclick="shareLineup()" title="Share Line-Up"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
     </div>
     <div class="bench-bar" id="benchBar"></div>
     <!-- 3 Action buttons between bench and bottom bar -->
@@ -224,7 +227,7 @@
     <div class="modal-box" onclick="event.stopPropagation()">
       <div class="modal-title">Match Overview</div>
       <div id="summaryContent"></div>
-      <button class="modal-btn green" onclick="shareMatchSummary()">↗ Share</button>
+      <button class="modal-btn green" style="display:flex;align-items:center;justify-content:center;gap:8px;" onclick="shareMatchSummary()"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>Share</span></button>
       <button class="modal-btn" onclick="closeModals()">Close</button>
     </div>
   </div>
@@ -234,19 +237,23 @@
     <div class="modal-box" onclick="event.stopPropagation()">
       <div class="modal-title">Playing Time Overview</div>
       <div id="speeltijdModalContent"></div>
-      <button class="modal-btn green" onclick="shareSpeeltijdSummary()">↗ Share</button>
+      <button class="modal-btn green" style="display:flex;align-items:center;justify-content:center;gap:8px;" onclick="shareSpeeltijdSummary()"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span>Share</span></button>
       <button class="modal-btn" onclick="closeModals()">Close</button>
     </div>
   </div>
 
-  <!-- Info Modal (Developer) -->
+  <!-- Info Modal (Developer & Speed Test) -->
   <div class="modal-backdrop" id="infoModal" onclick="closeModals(event)">
     <div class="modal-box" onclick="event.stopPropagation()">
       <div class="modal-title">About Da Pitch</div>
-      <div style="text-align:center; padding: 12px 0 20px;">
-        <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:10px;">Developed by Daniel van Soest</p>
-        <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:14px;">danielvs69@outlook.com</a>
-        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Version 2.4</p>
+      <div style="text-align:center; padding: 6px 0 14px;">
+        <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:8px;">Developed by Daniel van Soest</p>
+        <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:12px;">danielvs69@outlook.com</a>
+        <p style="font-size:14px; font-weight:800; color:#a1a1aa; margin-bottom:14px;">Version 2.6</p>
+      </div>
+      <div style="border-top:1px solid #2c2c2e; padding-top:12px; margin-bottom:12px;">
+        <div style="font-size:13px; font-weight:900; color:#facc15; margin-bottom:6px; text-align:center; text-transform:uppercase; letter-spacing:0.5px;">Simulation Speed</div>
+        <button class="modal-btn" id="speedToggleBtn" style="background:#27272a; border:2px solid #3f3f46;" onclick="toggleSimSpeed()">⚡ 10x Speed: OFF</button>
       </div>
       <button class="modal-btn" onclick="closeModals()">Close</button>
     </div>
@@ -427,7 +434,8 @@ let state = {
   teamName: "My Team",
   customLogo: "DaPitchLogo.png",
   formationType: "11v11_433",
-  formationCategory: "11v11"
+  formationCategory: "11v11",
+  simSpeed: 1
 };
 
 function initMinutes() {
@@ -517,7 +525,7 @@ function renderHeader() {
   const oppCol = `
     <div class="team-col" onclick="openInfoModal()">
       <div class="opp-badge">i</div>
-      <div class="team-label">&nbsp;</div>
+      <div class="team-label">Info</div>
     </div>`;
 
   const leftCol = state.isHome ? spiritCol : oppCol;
@@ -792,11 +800,12 @@ function switchTab(tab) {
 setInterval(() => {
   if (state.status === "Live" && state.lastTick) {
     const now = Date.now();
-    const diffSec = Math.floor((now - state.lastTick) / 1000);
-    if (diffSec >= 1) {
+    const realDiffSec = Math.floor((now - state.lastTick) / 1000);
+    const speed = state.simSpeed || 1;
+    if (realDiffSec >= 1) {
+      state.lastTick += realDiffSec * 1000;
       const oldMin = Math.floor(state.elapsedSec / 60);
-      state.elapsedSec += diffSec;
-      state.lastTick += diffSec * 1000;
+      state.elapsedSec += (realDiffSec * speed);
       const newMin = Math.floor(state.elapsedSec / 60);
       const addedMins = newMin - oldMin;
       if (addedMins > 0) {
@@ -817,7 +826,30 @@ function openTimeModal() {
   document.getElementById("timeModal").classList.add("open");
 }
 
+function toggleSimSpeed() {
+  state.simSpeed = (state.simSpeed === 10) ? 1 : 10;
+  saveState();
+  updateSpeedButtonUI();
+}
+
+function updateSpeedButtonUI() {
+  const btn = document.getElementById("speedToggleBtn");
+  if (!btn) return;
+  if (state.simSpeed === 10) {
+    btn.textContent = "⚡ 10x Speed: ON";
+    btn.style.background = "#16a34a";
+    btn.style.borderColor = "#4ade80";
+    btn.style.color = "#ffffff";
+  } else {
+    btn.textContent = "⚡ 10x Speed: OFF";
+    btn.style.background = "#27272a";
+    btn.style.borderColor = "#3f3f46";
+    btn.style.color = "#ffffff";
+  }
+}
+
 function openInfoModal() {
+  updateSpeedButtonUI();
   document.getElementById("infoModal").classList.add("open");
 }
 
@@ -987,6 +1019,7 @@ function resetMatch() {
   state.spiritScore = 0;
   state.oppScore = 0;
   state.goals = [];
+  state.simSpeed = 1;
   state.previewBlock = null;
   state.selectedPlayer = null;
   state.players.forEach(p => { state.minutes[p] = 0; });
@@ -1322,7 +1355,55 @@ async function shareSpeeltijdSummary() {
   }
 }
 
-const CURRENT_APP_VERSION = "2.4";
+async function shareLineup() {
+  const teamLabel = state.teamName || "My Team";
+  const blockMin = state.previewBlock !== null ? state.previewBlock : state.activeBlock;
+  const fieldPlayers = getDisplayedField();
+  const benchPlayers = state.players
+    .filter(p => !state.absent.includes(p) && !fieldPlayers.includes(p))
+    .sort((a, b) => (state.minutes[a] || 0) - (state.minutes[b] || 0));
+
+  const formNames = {
+    '11v11_433': '4-3-3', '11v11_442': '4-4-2', '11v11_4231': '4-2-3-1',
+    '8v8_331': '3-3-1', '8v8_322': '3-2-2', '8v8_232': '2-3-2',
+    '6v6_221': '2-2-1', '6v6_131': '1-3-1', '6v6_212': '2-1-2'
+  };
+  const formLabel = formNames[state.formationType] || '';
+
+  let text = `⚽ *Line-Up ${teamLabel}* (${blockMin}'${formLabel ? ' - ' + formLabel : ''})\n\n`;
+  text += `*On Pitch (${fieldPlayers.length}):*\n`;
+  fieldPlayers.forEach((p, idx) => {
+    const role = idx === 0 ? 'GK' : `#${idx + 1}`;
+    text += `• ${role}: ${p}\n`;
+  });
+
+  text += `\n*Bench (${benchPlayers.length}):*\n`;
+  if (benchPlayers.length > 0) {
+    benchPlayers.forEach(p => {
+      text += `• ${p}\n`;
+    });
+  } else {
+    text += `• None\n`;
+  }
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: `Line-Up ${teamLabel} (${blockMin}')`, text });
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    alert("Line-up copied to clipboard! Ready to paste in WhatsApp.");
+  } catch (e) {
+    alert(text);
+  }
+}
+
+const CURRENT_APP_VERSION = "2.6";
 
 async function checkForUpdates() {
   try {
