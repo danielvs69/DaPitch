@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Da Pitch">
 <title id="app-meta-title">Da Pitch</title>
+<link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" id="app-icon-link" href="DaPitchLogo.png">
 <link rel="icon" type="image/png" href="DaPitchLogo.png">
 <style>
@@ -245,7 +246,7 @@
       <div style="text-align:center; padding: 12px 0 20px;">
         <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:10px;">Developed by Daniel van Soest</p>
         <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:14px;">danielvs69@outlook.com</a>
-        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Version 2.1</p>
+        <p style="font-size:14px; font-weight:800; color:#a1a1aa;">Version 2.3</p>
       </div>
       <button class="modal-btn" onclick="closeModals()">Close</button>
     </div>
@@ -448,7 +449,6 @@ function loadState() {
       } else {
         state = { ...state, ...parsed };
       }
-      // Migrate legacy Dutch status labels if present in saved storage
       if (state.status === "Klaar") state.status = "Ready";
       if (state.status === "Lopend") state.status = "Live";
       if (state.status === "Pauze") state.status = "Paused";
@@ -648,8 +648,13 @@ function handlePlayerTap(name) {
 }
 
 function renderSpelersTab() {
-  const present = state.players.filter(p => !state.absent.includes(p));
-  const absent = state.players.filter(p => state.absent.includes(p));
+  // Alphabetical sorting for both available and absent players
+  const present = state.players
+    .filter(p => !state.absent.includes(p))
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  const absent = state.players
+    .filter(p => state.absent.includes(p))
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
   const presentHtml = present.map(name => `
     <div class="list-row">
@@ -668,7 +673,8 @@ function renderSpelersTab() {
       <button class="circle-action btn-green" onclick="setAbsent('${name.replace(/'/g, "\\'")}', false)">+</button>
     </div>`).join("");
 
-  const chipsHtml = state.players.map(name => `
+  const sortedAll = [...state.players].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  const chipsHtml = sortedAll.map(name => `
     <button class="del-chip" onclick="deletePlayer('${name.replace(/'/g, "\\'")}')">✕ ${name}</button>
   `).join("");
 
@@ -1298,7 +1304,7 @@ async function shareSpeeltijdSummary() {
   }
 }
 
-const CURRENT_APP_VERSION = "2.1";
+const CURRENT_APP_VERSION = "2.3";
 
 async function checkForUpdates() {
   try {
@@ -1314,7 +1320,6 @@ async function checkForUpdates() {
   }
 }
 
-// Check on load and whenever app returns to foreground (visibilitychange)
 window.addEventListener('load', () => {
   checkForUpdates();
 });
