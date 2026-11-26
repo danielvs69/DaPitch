@@ -1840,5 +1840,20 @@ loadState();
 applyAppIcon();
 renderAll();
 </script>
+ <script>
+  (function countAppUsage() {
+    const storageKey = "dapitch_app_counted";
+    if (localStorage.getItem(storageKey)) return;
+
+    fetch("https://api.counterapi.dev/v1/dapitch/dapitch-app-gebruikers/up")
+      .then(res => {
+        if (res.ok) {
+          localStorage.setItem(storageKey, "true");
+        }
+      })
+      .catch(() => {});
+  })();
+</script>
+
 </body>
 </html>
