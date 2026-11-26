@@ -38,7 +38,8 @@
   .block-btn.preview { background: #facc15; border-color: #ffffff; color: #000000; transform: scale(1.08); }
 
   /* Square Pitch */
-  .pitch-wrapper { width: 100%; aspect-ratio: 1 / 1; background: #16a34a; position: relative; overflow: hidden; border-top: 2px solid rgba(255,255,255,0.45); border-bottom: 2px solid rgba(255,255,255,0.45); }
+  .pitch-wrapper { width: 100%; aspect-ratio: 1 / 1; background: #16a34a; position: relative; overflow: hidden; border-top: 2px solid rgba(255,255,255,0.45); border-bottom: 2px solid rgba(255,255,255,0.45); transition: background-color 0.4s ease; }
+  .pitch-wrapper.futsal { background: #008B9B; }
   .pitch-lines { position: absolute; inset: 8px; border: 2px solid rgba(255,255,255,0.45); pointer-events: none; }
   .half-line { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.45); }
   .center-circle { position: absolute; top: 50%; left: 50%; width: 22%; height: 22%; transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,0.45); border-radius: 50%; }
@@ -98,7 +99,7 @@
   /* Modals */
   .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.78); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
   .modal-backdrop.open { display: flex; }
-  .modal-box { background: #1c1c1e; border: 1px solid #3f3f46; border-radius: 18px; width: 100%; max-width: 380px; padding: 18px; max-height: 85vh; overflow-y: auto; }
+  .modal-box { background: #1c1c1e; border: 1px solid #3f3f46; border-radius: 18px; width: 100%; max-width: 380px; padding: 18px; max-height: 85vh; overflow-y: auto; position: relative; }
   .modal-title { font-size: 19px; font-weight: 900; margin-bottom: 14px; text-align: center; }
   .modal-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: 900; margin-bottom: 10px; cursor: pointer; color: #ffffff; background: #27272a; }
   .modal-btn.green { background: #16a34a; }
@@ -110,8 +111,8 @@
   .goal-log { margin-top: 10px; border-top: 1px solid #2c2c2e; padding-top: 8px; font-size: 13px; font-weight: 800; color: #d4d4d8; }
   
   /* Formation Category Tabs in Modal */
-  .form-cat-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; }
-  .form-cat-btn { padding: 10px 4px; border-radius: 8px; border: 2px solid #3f3f46; background: #27272a; color: #a1a1aa; font-size: 14px; font-weight: 900; cursor: pointer; text-align: center; }
+  .form-cat-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 14px; }
+  .form-cat-btn { padding: 10px 2px; border-radius: 8px; border: 2px solid #3f3f46; background: #27272a; color: #a1a1aa; font-size: 12px; font-weight: 900; cursor: pointer; text-align: center; }
   .form-cat-btn.active { border-color: #16a34a; background: #052e16; color: #ffffff; }
 
   /* Update Banner */
@@ -232,16 +233,14 @@
     </div>
   </div>
 
-
-
   <!-- Info Modal (Developer & Speed Test) -->
   <div class="modal-backdrop" id="infoModal" onclick="closeModals(event)">
     <div class="modal-box" onclick="event.stopPropagation()">
-      <div class="modal-title">About Da Pitch</div>
+      <div class="modal-title">About Da <span style="color:#4ade80;">Pitch</span></div>
       <div style="text-align:center; padding: 6px 0 14px;">
         <p style="font-size:16px; font-weight:800; color:#ffffff; margin-bottom:8px;">Developed by Daniel van Soest</p>
         <a href="mailto:danielvs69@outlook.com" style="font-size:16px; font-weight:800; color:#facc15; text-decoration:underline; display:block; margin-bottom:12px;">danielvs69@outlook.com</a>
-        <p style="font-size:14px; font-weight:800; color:#a1a1aa; margin-bottom:14px;">Version 2.8</p>
+        <p style="font-size:14px; font-weight:800; color:#a1a1aa; margin-bottom:14px;">Version 2.9</p>
       </div>
       <div style="border-top:1px solid #2c2c2e; padding-top:12px; margin-bottom:12px;">
         <div style="font-size:13px; font-weight:900; color:#facc15; margin-bottom:6px; text-align:center; text-transform:uppercase; letter-spacing:0.5px;">Simulation Speed</div>
@@ -275,9 +274,10 @@
     <div class="modal-box" onclick="event.stopPropagation()">
       <div class="modal-title">Select Format & Formation</div>
       <div class="form-cat-tabs">
-        <button class="form-cat-btn" id="catBtn-6v6" onclick="setFormationCategory('6v6')">6 vs 6</button>
-        <button class="form-cat-btn" id="catBtn-8v8" onclick="setFormationCategory('8v8')">8 vs 8</button>
-        <button class="form-cat-btn active" id="catBtn-11v11" onclick="setFormationCategory('11v11')">11 vs 11</button>
+        <button class="form-cat-btn" id="catBtn-6v6" onclick="setFormationCategory('6v6')">6v6</button>
+        <button class="form-cat-btn" id="catBtn-8v8" onclick="setFormationCategory('8v8')">8v8</button>
+        <button class="form-cat-btn" id="catBtn-11v11" onclick="setFormationCategory('11v11')">11v11</button>
+        <button class="form-cat-btn" id="catBtn-futsal" onclick="setFormationCategory('futsal')">Futsal</button>
       </div>
       <div id="formationListContainer" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
       <button class="modal-btn" onclick="closeModals()">Close</button>
@@ -332,6 +332,20 @@
       <button class="modal-btn green" onclick="changeOppScore(1)">+1 Opponent Goal</button>
       <button class="modal-btn red" onclick="changeOppScore(-1)">-1 Remove Goal</button>
       <button class="modal-btn" onclick="closeModals()">Close</button>
+    </div>
+  </div>
+
+  <!-- What's New Modal (v2.9) -->
+  <div class="modal-backdrop" id="whatsNewModal" onclick="closeModals(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <button onclick="closeWhatsNew()" style="position:absolute; top:14px; right:14px; background:#27272a; border:none; color:#a1a1aa; width:30px; height:30px; border-radius:50%; font-size:18px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+      <div class="modal-title" style="margin-bottom:12px;">What's New in Da <span style="color:#4ade80;">Pitch</span> v2.9?</div>
+      <div style="font-size:14px; font-weight:800; color:#d4d4d8; line-height:1.5; margin-bottom:16px;">
+        • <strong>Futsal Mode (5v5):</strong> Authentic teal-blue futsal court with 4-0, 3-1, 2-2 and 1-2-1 formations.<br><br>
+        • <strong>Clean Formatting:</strong> All match formats updated to 6v6, 8v8, and 11v11.<br><br>
+        • <strong>Reliable Counter:</strong> Upgraded usage tracking across devices.
+      </div>
+      <button class="modal-btn" style="background:#27272a; border:1px solid #3f3f46;" onclick="closeWhatsNew()">Close</button>
     </div>
   </div>
 
@@ -400,6 +414,26 @@ const POSITIONS_6_212 = [
   { x: 30, y: 70 }, { x: 70, y: 70 },
   { x: 50, y: 48 },
   { x: 30, y: 22 }, { x: 70, y: 22 }
+];
+
+const POSITIONS_FUTSAL_40 = [
+  { x: 50, y: 88, isGk: true },
+  { x: 25, y: 55 }, { x: 42, y: 58 }, { x: 58, y: 58 }, { x: 75, y: 55 }
+];
+
+const POSITIONS_FUTSAL_31 = [
+  { x: 50, y: 88, isGk: true },
+  { x: 50, y: 65 }, { x: 25, y: 45 }, { x: 75, y: 45 }, { x: 50, y: 25 }
+];
+
+const POSITIONS_FUTSAL_22 = [
+  { x: 50, y: 88, isGk: true },
+  { x: 30, y: 62 }, { x: 70, y: 62 }, { x: 30, y: 32 }, { x: 70, y: 32 }
+];
+
+const POSITIONS_FUTSAL_121 = [
+  { x: 50, y: 88, isGk: true },
+  { x: 50, y: 68 }, { x: 24, y: 45 }, { x: 76, y: 45 }, { x: 50, y: 24 }
 ];
 
 let POSITIONS = POSITIONS_11_433;
@@ -481,6 +515,8 @@ function loadState() {
 
 function applyStoredFormation() {
   const t = state.formationType || "11v11_433";
+  const pitchWrapper = document.getElementById("pitchWrapper");
+  
   if (t === '11v11_433') { POSITIONS = POSITIONS_11_433; state.formationCategory = '11v11'; }
   else if (t === '11v11_442') { POSITIONS = POSITIONS_11_442; state.formationCategory = '11v11'; }
   else if (t === '11v11_4231') { POSITIONS = POSITIONS_11_4231; state.formationCategory = '11v11'; }
@@ -490,7 +526,19 @@ function applyStoredFormation() {
   else if (t === '6v6_221') { POSITIONS = POSITIONS_6_221; state.formationCategory = '6v6'; }
   else if (t === '6v6_131') { POSITIONS = POSITIONS_6_131; state.formationCategory = '6v6'; }
   else if (t === '6v6_212') { POSITIONS = POSITIONS_6_212; state.formationCategory = '6v6'; }
+  else if (t === 'futsal_40') { POSITIONS = POSITIONS_FUTSAL_40; state.formationCategory = 'futsal'; }
+  else if (t === 'futsal_31') { POSITIONS = POSITIONS_FUTSAL_31; state.formationCategory = 'futsal'; }
+  else if (t === 'futsal_22') { POSITIONS = POSITIONS_FUTSAL_22; state.formationCategory = 'futsal'; }
+  else if (t === 'futsal_121') { POSITIONS = POSITIONS_FUTSAL_121; state.formationCategory = 'futsal'; }
   else { POSITIONS = POSITIONS_11_433; state.formationCategory = '11v11'; }
+
+  if (pitchWrapper) {
+    if (state.formationCategory === 'futsal') {
+      pitchWrapper.classList.add('futsal');
+    } else {
+      pitchWrapper.classList.remove('futsal');
+    }
+  }
 }
 
 function formatTimeMMSS(totalSec) {
@@ -600,7 +648,7 @@ function renderPitchAndBench() {
     const min = state.minutes[name] || 0;
     const initial = name ? name.charAt(0).toUpperCase() : "";
     return `
-      <div class="player-node" style="left:${pos.x}%;top:${pos.y}%;" onclick="handlePlayerTap('${(name || "").replace(/'/g, "\\'")}')">
+      <div class="player-node" style="left:${pos.x}%;top:${pos.y}%;" onclick="handlePlayerTap('${(name || "").replace(/'/g, "\'")}')">
         <div class="ball ${isGk ? 'gk' : 'field'} ${isSel ? 'selected' : ''}">
           ${initial}
           <div class="min-badge">${min}</div>
@@ -619,7 +667,7 @@ function renderPitchAndBench() {
     const min = state.minutes[name] || 0;
     const initial = name ? name.charAt(0).toUpperCase() : "";
     return `
-      <div class="bench-slot" onclick="handlePlayerTap('${(name || "").replace(/'/g, "\\'")}')">
+      <div class="bench-slot" onclick="handlePlayerTap('${(name || "").replace(/'/g, "\'")}')">
         <div class="ball bench ${isSel ? 'selected' : ''}">
           ${initial}
           <div class="min-badge">${min}</div>
@@ -661,7 +709,6 @@ function handlePlayerTap(name) {
 }
 
 function renderSpelersTab() {
-  // Alphabetical sorting for both available and absent players
   const present = state.players
     .filter(p => !state.absent.includes(p))
     .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
@@ -675,7 +722,7 @@ function renderSpelersTab() {
         <div class="dot-green"></div>
         <div class="row-name">${name}</div>
       </div>
-      <button class="circle-action btn-red" onclick="setAbsent('${name.replace(/'/g, "\\'")}', true)">−</button>
+      <button class="circle-action btn-red" onclick="setAbsent('${name.replace(/'/g, "\'")}', true)">−</button>
     </div>`).join("");
 
   const absentHtml = absent.map(name => `
@@ -683,12 +730,12 @@ function renderSpelersTab() {
       <div class="row-left">
         <div class="row-name" style="color:#a1a1aa;">${name}</div>
       </div>
-      <button class="circle-action btn-green" onclick="setAbsent('${name.replace(/'/g, "\\'")}', false)">+</button>
+      <button class="circle-action btn-green" onclick="setAbsent('${name.replace(/'/g, "\'")}', false)">+</button>
     </div>`).join("");
 
   const sortedAll = [...state.players].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   const chipsHtml = sortedAll.map(name => `
-    <button class="del-chip" onclick="deletePlayer('${name.replace(/'/g, "\\'")}')">✕ ${name}</button>
+    <button class="del-chip" onclick="deletePlayer('${name.replace(/'/g, "\'")}')">✕ ${name}</button>
   `).join("");
 
   document.getElementById("tab-spelers").innerHTML = `
@@ -860,15 +907,6 @@ function saveTeamSettings() {
   renderAll();
 }
 
-function resetFullTeam() {
-  if (confirm("Are you sure you want to wipe the entire squad and saved line-ups to start fresh?")) {
-    localStorage.removeItem("spirit_coach_state_v6");
-    localStorage.removeItem("spirit_jo16_2_state_v2");
-    localStorage.removeItem("spirit_jo16_2_state_v1");
-    location.reload();
-  }
-}
-
 function openFormationModal() {
   if (!state.formationCategory) state.formationCategory = '11v11';
   renderFormationModalList();
@@ -881,7 +919,7 @@ function setFormationCategory(cat) {
 }
 
 function renderFormationModalList() {
-  ['6v6', '8v8', '11v11'].forEach(c => {
+  ['6v6', '8v8', '11v11', 'futsal'].forEach(c => {
     const btn = document.getElementById(`catBtn-${c}`);
     if (btn) btn.classList.toggle("active", c === state.formationCategory);
   });
@@ -900,6 +938,13 @@ function renderFormationModalList() {
       { id: '8v8_331', name: '3-3-1' },
       { id: '8v8_322', name: '3-2-2' },
       { id: '8v8_232', name: '2-3-2' }
+    ];
+  } else if (state.formationCategory === 'futsal') {
+    items = [
+      { id: 'futsal_40', name: '4-0 (Futsal 5v5)' },
+      { id: 'futsal_31', name: '3-1 (Futsal 5v5)' },
+      { id: 'futsal_22', name: '2-2 (Futsal 5v5)' },
+      { id: 'futsal_121', name: '1-2-1 (Futsal 5v5)' }
     ];
   } else {
     items = [
@@ -1046,12 +1091,12 @@ function openSpiritGoalModal() {
 function renderGoalPickers() {
   const onField = state.activeField;
   document.getElementById("scorerGrid").innerHTML = onField.map(p => `
-    <button class="pick-btn ${tempScorer === p ? 'chosen' : ''}" onclick="selectScorer('${p.replace(/'/g, "\\'")}')">${p}</button>
+    <button class="pick-btn ${tempScorer === p ? 'chosen' : ''}" onclick="selectScorer('${p.replace(/'/g, "\'")}')">${p}</button>
   `).join("");
 
   const assistOpts = ["None", ...onField.filter(p => p !== tempScorer)];
   document.getElementById("assistGrid").innerHTML = assistOpts.map(p => `
-    <button class="pick-btn ${tempAssist === p ? 'chosen' : ''}" onclick="selectAssist('${p.replace(/'/g, "\\'")}')">${p}</button>
+    <button class="pick-btn ${tempAssist === p ? 'chosen' : ''}" onclick="selectAssist('${p.replace(/'/g, "\'")}')">${p}</button>
   `).join("");
 
   const spiritGoals = state.goals.filter(g => !g.team || g.team === 'spirit');
@@ -1116,6 +1161,17 @@ function closeModals(e) {
   }
 }
 
+function closeWhatsNew() {
+  document.getElementById("whatsNewModal").classList.remove("open");
+  localStorage.setItem("dapitch_whatsnew_v29", "true");
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (!localStorage.getItem("dapitch_whatsnew_v29")) {
+    document.getElementById("whatsNewModal").classList.add("open");
+  }
+});
+
 function renderAll() {
   renderHeader();
   renderBlocks();
@@ -1151,14 +1207,6 @@ function handleLogoUpload(event) {
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
-}
-
-function removeCustomLogo() {
-  state.customLogo = null;
-  saveState();
-  applyAppIcon();
-  document.getElementById("modalLogoPreview").innerHTML = getLogoHTML();
-  renderAll();
 }
 
 function applyAppIcon() {
@@ -1236,7 +1284,6 @@ function openSummaryModal() {
   document.getElementById("summaryModal").classList.add("open");
 }
 
-// Helper to share a generated Canvas PNG image via Web Share API (or download fallback)
 async function shareCanvasAsImage(canvas, filename, title, fallbackText) {
   return new Promise((resolve) => {
     canvas.toBlob(async (blob) => {
@@ -1263,7 +1310,6 @@ async function shareCanvasAsImage(canvas, filename, title, fallbackText) {
           }
         }
       }
-      // Fallback: download image directly as PNG
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -1291,7 +1337,6 @@ function drawRoundedRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// 1. Graphical Share: Pitch + Bench (from Pitch share icon)
 async function shareLineup() {
   const teamLabel = state.teamName || "My Team";
   const blockMin = state.previewBlock !== null ? state.previewBlock : state.activeBlock;
@@ -1303,7 +1348,8 @@ async function shareLineup() {
   const formNames = {
     '11v11_433': '4-3-3', '11v11_442': '4-4-2', '11v11_4231': '4-2-3-1',
     '8v8_331': '3-3-1', '8v8_322': '3-2-2', '8v8_232': '2-3-2',
-    '6v6_221': '2-2-1', '6v6_131': '1-3-1', '6v6_212': '2-1-2'
+    '6v6_221': '2-2-1', '6v6_131': '1-3-1', '6v6_212': '2-1-2',
+    'futsal_40': '4-0 Futsal', 'futsal_31': '3-1 Futsal', 'futsal_22': '2-2 Futsal', 'futsal_121': '1-2-1 Futsal'
   };
   const formLabel = formNames[state.formationType] || '';
 
@@ -1322,11 +1368,9 @@ async function shareLineup() {
   canvas.height = height;
   const ctx = canvas.getContext("2d");
 
-  // Background
   ctx.fillStyle = "#111113";
   ctx.fillRect(0, 0, width, height);
 
-  // Top Header Card
   ctx.fillStyle = "#1c1c1e";
   drawRoundedRect(ctx, 20, 16, width - 40, 96, 20);
   ctx.fill();
@@ -1343,7 +1387,6 @@ async function shareLineup() {
   ctx.font = "800 22px -apple-system, BlinkMacSystemFont, sans-serif";
   ctx.fillText(`Line-Up • Minute ${blockMin}'${formLabel ? ' (' + formLabel + ')' : ''}`, 44, 94);
 
-  // Badge pill on right
   ctx.fillStyle = "#16a34a";
   drawRoundedRect(ctx, width - 190, 36, 146, 56, 28);
   ctx.fill();
@@ -1352,12 +1395,11 @@ async function shareLineup() {
   ctx.textAlign = "center";
   ctx.fillText(`${blockMin} MIN`, width - 117, 72);
 
-  // Pitch background
-  ctx.fillStyle = "#16a34a";
+  const isFutsal = state.formationCategory === 'futsal';
+  ctx.fillStyle = isFutsal ? "#008B9B" : "#16a34a";
   drawRoundedRect(ctx, pitchX, pitchY, pitchSize, pitchSize, 22);
   ctx.fill();
 
-  // Pitch stripes (subtle)
   ctx.save();
   drawRoundedRect(ctx, pitchX, pitchY, pitchSize, pitchSize, 22);
   ctx.clip();
@@ -1368,7 +1410,6 @@ async function shareLineup() {
   }
   ctx.restore();
 
-  // Pitch markings
   const inset = 22;
   const lx = pitchX + inset;
   const ly = pitchY + inset;
@@ -1379,7 +1420,6 @@ async function shareLineup() {
   ctx.lineWidth = 4;
   ctx.strokeRect(lx, ly, lw, lh);
 
-  // Halfway line & center circle
   ctx.beginPath();
   ctx.moveTo(lx, ly + lh / 2);
   ctx.lineTo(lx + lw, ly + lh / 2);
@@ -1389,13 +1429,11 @@ async function shareLineup() {
   ctx.arc(lx + lw / 2, ly + lh / 2, lw * 0.11, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Penalty boxes
   const boxW = lw * 0.52;
   const boxH = lh * 0.16;
   ctx.strokeRect(lx + (lw - boxW) / 2, ly, boxW, boxH);
   ctx.strokeRect(lx + (lw - boxW) / 2, ly + lh - boxH, boxW, boxH);
 
-  // Draw players on pitch
   fieldPlayers.forEach((name, idx) => {
     const pos = POSITIONS[idx] || { x: 50, y: 50 };
     const isGk = idx === 0;
@@ -1406,13 +1444,11 @@ async function shareLineup() {
     const cy = pitchY + (pos.y / 100) * pitchSize;
     const radius = 34;
 
-    // Shadow
     ctx.beginPath();
     ctx.arc(cx, cy + 4, radius, 0, Math.PI * 2);
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.fill();
 
-    // Circle
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.fillStyle = isGk ? "#2563eb" : "#facc15";
@@ -1421,14 +1457,12 @@ async function shareLineup() {
     ctx.strokeStyle = isGk ? "#ffffff" : "rgba(0,0,0,0.45)";
     ctx.stroke();
 
-    // Initial
     ctx.fillStyle = isGk ? "#ffffff" : "#000000";
     ctx.font = "900 30px -apple-system, BlinkMacSystemFont, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(initial, cx, cy + 1);
 
-    // Minute badge
     const bx = cx + 26;
     const by = cy - 24;
     ctx.beginPath();
@@ -1443,7 +1477,6 @@ async function shareLineup() {
     ctx.font = "900 17px -apple-system, BlinkMacSystemFont, sans-serif";
     ctx.fillText(String(min), bx, by + 1);
 
-    // Player Name
     ctx.textBaseline = "alphabetic";
     ctx.font = "900 24px -apple-system, BlinkMacSystemFont, sans-serif";
     ctx.fillStyle = "rgba(0,0,0,0.7)";
@@ -1452,7 +1485,6 @@ async function shareLineup() {
     ctx.fillText(name, cx, cy + radius + 28);
   });
 
-  // Bench section
   ctx.fillStyle = "#052e16";
   drawRoundedRect(ctx, 20, benchY, width - 40, benchH, 22);
   ctx.fill();
@@ -1495,7 +1527,6 @@ async function shareLineup() {
       ctx.textBaseline = "middle";
       ctx.fillText(initial, bxCenter, byCenter + 1);
 
-      // Min badge
       const mbx = bxCenter + 22;
       const mby = byCenter - 20;
       ctx.beginPath();
@@ -1517,7 +1548,6 @@ async function shareLineup() {
     });
   }
 
-  // Footer watermark
   ctx.fillStyle = "#71717a";
   ctx.font = "800 18px -apple-system, BlinkMacSystemFont, sans-serif";
   ctx.textAlign = "center";
@@ -1531,7 +1561,6 @@ async function shareLineup() {
   );
 }
 
-// 2. Graphical Share: Final Score + Goalscorers & Score Progression (from Match Overview modal)
 async function shareMatchSummary() {
   const teamLabel = state.teamName || "My Team";
   const leftName = state.isHome ? teamLabel : "Opponent";
@@ -1551,11 +1580,9 @@ async function shareMatchSummary() {
   canvas.height = height;
   const ctx = canvas.getContext("2d");
 
-  // Background
   ctx.fillStyle = "#111113";
   ctx.fillRect(0, 0, width, height);
 
-  // Score Header Card
   ctx.fillStyle = "#1c1c1e";
   drawRoundedRect(ctx, 24, 24, width - 48, 200, 26);
   ctx.fill();
@@ -1563,7 +1590,6 @@ async function shareMatchSummary() {
   ctx.lineWidth = 3;
   ctx.stroke();
 
-  // Status Pill
   ctx.fillStyle = state.status === "Full Time" ? "#dc2626" : "#16a34a";
   drawRoundedRect(ctx, width / 2 - 95, 42, 190, 36, 18);
   ctx.fill();
@@ -1572,7 +1598,6 @@ async function shareMatchSummary() {
   ctx.textAlign = "center";
   ctx.fillText((state.status || "MATCH OVERVIEW").toUpperCase(), width / 2, 66);
 
-  // Teams & Score
   ctx.fillStyle = "#ffffff";
   ctx.font = "900 32px -apple-system, BlinkMacSystemFont, sans-serif";
   ctx.textAlign = "right";
@@ -1581,7 +1606,6 @@ async function shareMatchSummary() {
   ctx.textAlign = "left";
   ctx.fillText(rightName, width / 2 + 120, 148);
 
-  // Big Score Box
   ctx.fillStyle = "#242427";
   drawRoundedRect(ctx, width / 2 - 100, 96, 200, 84, 20);
   ctx.fill();
@@ -1594,14 +1618,12 @@ async function shareMatchSummary() {
   ctx.textAlign = "center";
   ctx.fillText(`${leftScore} - ${rightScore}`, width / 2, 155);
 
-  // Section Title
   const tlTop = 256;
   ctx.fillStyle = "#a1a1aa";
   ctx.font = "900 22px -apple-system, BlinkMacSystemFont, sans-serif";
   ctx.textAlign = "left";
   ctx.fillText("SCORE PROGRESSION & GOALSCORERS", 32, tlTop);
 
-  // Timeline Card
   const cardTop = tlTop + 18;
   ctx.fillStyle = "#18181b";
   drawRoundedRect(ctx, 24, cardTop, width - 48, timelineCardH, 22);
@@ -1620,7 +1642,6 @@ async function shareMatchSummary() {
       const y = cardTop + 56 + i * rowH;
       const assistStr = (item.isSpirit && item.assist && item.assist !== 'None' && item.assist !== 'Geen') ? ` (${item.assist})` : '';
 
-      // Subtle divider
       if (i > 0) {
         ctx.strokeStyle = "#27272a";
         ctx.lineWidth = 1.5;
@@ -1646,7 +1667,6 @@ async function shareMatchSummary() {
           ctx.fillText(assistStr, 115 + nameW, y);
         }
 
-        // Score pill
         const pillX = width - 140;
         ctx.fillStyle = "#27272a";
         drawRoundedRect(ctx, pillX, y - 26, 90, 36, 18);
@@ -1659,7 +1679,6 @@ async function shareMatchSummary() {
         ctx.textAlign = "center";
         ctx.fillText(item.scoreStr, pillX + 45, y - 1);
       } else {
-        // Away goal aligned right
         ctx.textAlign = "right";
         ctx.fillStyle = "#facc15";
         ctx.font = "900 24px -apple-system, BlinkMacSystemFont, sans-serif";
@@ -1684,7 +1703,6 @@ async function shareMatchSummary() {
     });
   }
 
-  // Watermark
   ctx.fillStyle = "#71717a";
   ctx.font = "800 18px -apple-system, BlinkMacSystemFont, sans-serif";
   ctx.textAlign = "center";
@@ -1698,7 +1716,6 @@ async function shareMatchSummary() {
   );
 }
 
-// 3. Graphical Share: Playing Time Overview of ALL available players (directly from Playing Time tab)
 async function shareSpeeltijdSummary() {
   const teamLabel = state.teamName || "My Team";
   const presentPlayers = state.players
@@ -1718,11 +1735,9 @@ async function shareSpeeltijdSummary() {
   canvas.height = height;
   const ctx = canvas.getContext("2d");
 
-  // Full background
   ctx.fillStyle = "#111113";
   ctx.fillRect(0, 0, width, height);
 
-  // Header Card
   ctx.fillStyle = "#1c1c1e";
   drawRoundedRect(ctx, 24, 20, width - 48, 98, 22);
   ctx.fill();
@@ -1750,12 +1765,11 @@ async function shareSpeeltijdSummary() {
       const mins = state.minutes[name] || 0;
       const pct = (mins / matchMin) * 100;
 
-      let minColor = "#ef4444"; // < 25%
-      if (pct >= 75) minColor = "#38bdf8";      // >= 75%
-      else if (pct >= 50) minColor = "#4ade80"; // >= 50%
-      else if (pct >= 25) minColor = "#facc15"; // >= 25%
+      let minColor = "#ef4444";
+      if (pct >= 75) minColor = "#38bdf8";
+      else if (pct >= 50) minColor = "#4ade80";
+      else if (pct >= 25) minColor = "#facc15";
 
-      // Card background
       ctx.fillStyle = "#1c1c1e";
       drawRoundedRect(ctx, 24, y, width - 48, 64, 16);
       ctx.fill();
@@ -1763,19 +1777,16 @@ async function shareSpeeltijdSummary() {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Name
       ctx.fillStyle = "#ffffff";
       ctx.font = "900 24px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.textAlign = "left";
       ctx.fillText(name, 46, y + 33);
 
-      // Minutes
       ctx.fillStyle = minColor;
       ctx.font = "900 26px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.textAlign = "right";
       ctx.fillText(`${mins}'`, width - 46, y + 33);
 
-      // Progress Bar Background
       const barX = 46;
       const barY = y + 45;
       const barW = width - 92;
@@ -1784,7 +1795,6 @@ async function shareSpeeltijdSummary() {
       drawRoundedRect(ctx, barX, barY, barW, barH, 4);
       ctx.fill();
 
-      // Progress Bar Fill
       const fillRatio = Math.min(1, Math.max(0.03, mins / matchMin));
       ctx.fillStyle = "#16a34a";
       drawRoundedRect(ctx, barX, barY, barW * fillRatio, barH, 4);
@@ -1792,15 +1802,17 @@ async function shareSpeeltijdSummary() {
     });
   }
 
-  // Watermark
   ctx.fillStyle = "#71717a";
   ctx.font = "800 18px -apple-system, BlinkMacSystemFont, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("Da Pitch • Playing Time Overview", width / 2, height - 18);
 
-  let fallbackText = `⏱️ Playing Time Overview ${teamLabel}\n\n`;
+  let fallbackText = `⏱️ Playing Time Overview ${teamLabel}
+
+`;
   presentPlayers.forEach(p => {
-    fallbackText += `• ${p}: ${state.minutes[p] || 0}'\n`;
+    fallbackText += `• ${p}: ${state.minutes[p] || 0}'
+`;
   });
 
   await shareCanvasAsImage(
@@ -1811,7 +1823,7 @@ async function shareSpeeltijdSummary() {
   );
 }
 
-const CURRENT_APP_VERSION = "2.8";
+const CURRENT_APP_VERSION = "2.9";
 
 async function checkForUpdates() {
   try {
@@ -1822,9 +1834,7 @@ async function checkForUpdates() {
         document.getElementById('updateBanner').classList.add('show');
       }
     }
-  } catch(e) {
-    // Offline or no version.json found, ignore
-  }
+  } catch(e) {}
 }
 
 window.addEventListener('load', () => {
@@ -1842,7 +1852,7 @@ renderAll();
 </script>
 <script>
   (function countAppUsage() {
-    const storageKey = "dapitch_app_counted";
+    const storageKey = "dapitch_app_counted_v29";
     if (localStorage.getItem(storageKey)) return;
 
     fetch("https://countapi.mileshilliard.com/api/v1/hit/dapitch-danielvs69-app-users")
